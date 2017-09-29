@@ -14,7 +14,7 @@ Step 2: Estimating a mean ordering of biomarkers.
 This toolbox supports 3 different Gaussian mixture models.
 1. Algorithm proposed in [3] by Alexandra Young et. al.
 2. Algorithm proposed in [2] by Vikram Venkatraghavan et. al.
-3. Algorithm proposed in [4] by Vikram Venkatraghavan et. al.
+3. Algorithm proposed in [4] by Vikram Venkatraghavan et. al. (left out of the toolbox currently)
 
 ## Required Libraries
 
@@ -27,7 +27,7 @@ Python 2.7.x, numpy 1.11 or higher, pandas 0.19, sklearn 0.18, scipy 0.18, seabo
 ### (optional) MethodOptions:
 Named Tuple with any or all of the following fields:
 
-*   MixtureModel - Choose the mixture model algorithm (Options: 'vv1'[2],'vv2'(default)[4], 'ay'[3])
+*   MixtureModel - Choose the mixture model algorithm (Options: 'vv1'[2] (default), 'vv2'[4] (left out), 'ay'[3])
 *   Bootstrap - Number of iterations in the bootstrapping [default - Turned Off].
 *   Staging - Choose the patient staging algorithm (Options 'ml' for most likely stage[1,2,3],'exp' for expected stage[4])
 
