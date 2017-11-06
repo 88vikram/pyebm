@@ -45,14 +45,17 @@ def pdReadData(str_data,flag_JointFit=False,Labels=['CN','MCI','AD']):
     
     if type(str_data) is str:
         Data = pd.read_csv(str_data)
-    else:
+    elif len(str_data)==0:
+        Data=[]; UniqueSubjIDs=[]
+        return Data,UniqueSubjIDs
+    else:    
         Data = str_data
     UniqueSubjIDs = pd.Series.unique(Data['PTID'])
     labels = np.zeros(len(Data['Diagnosis']),dtype=int)
     
     for i in range(len(Labels)):
-        idx_label=Data['Diagnosis'].str.match(Labels[i]); 
-        idx_label=np.where(idx_label);
+        idx_label=Data['Diagnosis'] == Labels[i]; 
+        idx_label=np.where(idx_label.values);
         idx_label = idx_label[0];
         if i==0:
             label_i=1;
@@ -65,70 +68,101 @@ def pdReadData(str_data,flag_JointFit=False,Labels=['CN','MCI','AD']):
     labels_selected=labels[np.logical_not(labels == 0)]
     Data=Data[idx_selectedsubjects]
     Data=Data.drop('Diagnosis',axis=1)
-    Data=Data.assign(Diagnosis=pd.Series(labels_selected))
+    Data=Data.assign(Diagnosis=pd.Series(labels_selected,Data.index))
     
     return Data,UniqueSubjIDs
 
-def CorrectConfounders(Data,Factors=['Age','Sex','ICV'],flag_correct=1):
+def CorrectConfounders(DataTrain,DataTest,Factors=['Age','Sex','ICV'],flag_correct=1):
     import statsmodels.formula.api as sm
     import numpy as np
     import pandas as pd
-    
+    flag_test=1;
+    droplist = ['PTID','Diagnosis','EXAMDATE']
     if flag_correct==0 or len(Factors)==0:
-        Data=Data.drop(Factors,axis=1)
-        DataBiomarkers=Data.drop(['PTID','Diagnosis','EXAMDATE'],axis=1)
+        DataTrain=DataTrain.drop(Factors,axis=1)
+        DataBiomarkers=DataTrain.copy()
+        H = list(DataBiomarkers)
+        for j in droplist:
+            if any(j in f for f in H):
+                DataBiomarkers=DataBiomarkers.drop(j,axis=1)
         BiomarkersList=list(DataBiomarkers)
+        if len(DataTest)>0:
+            DataTest = DataTest.drop(Factors,axis=1)
     else:
         ## Change categorical value to numerical value
+        if len(DataTest)==0:
+            flag_test=0;
+            DataTest=DataTrain.copy()
+
         if any('Sex' in f for f in Factors):
-            sex = np.zeros(len(Data['Diagnosis']),dtype=int)
-            idx_male=Data['Sex'] == 'Male'; idx_male=np.where(idx_male); idx_male = idx_male[0];
-            idx_female=Data['Sex'] == 'Female'; idx_female=np.where(idx_female); idx_male = idx_female[0];
-            sex[idx_male]=1; sex[idx_female]=0;
-            Data=Data.drop('Sex',axis=1)
-            Data=Data.assign(Sex=pd.Series(sex))
+            count=-1;
+            for Data in [DataTrain,DataTest]:
+                count=count+1;
+                sex = np.zeros(len(Data['Diagnosis']),dtype=int)
+                idx_male=Data['Sex'] == 'Male'; idx_male=np.where(idx_male); idx_male = idx_male[0];
+                idx_female=Data['Sex'] == 'Female'; idx_female=np.where(idx_female); idx_female = idx_female[0];
+                sex[idx_male]=1; sex[idx_female]=0;
+                Data=Data.drop('Sex',axis=1)
+                Data=Data.assign(Sex=pd.Series(sex))
+                if count==0:
+                    DataTrain = Data.copy()
+                else:
+                    DataTest = Data.copy()
         
         ## Separate the list of biomarkers from confounders and meta data
-        DataBiomarkers=Data
-        DataBiomarkers=DataBiomarkers.drop(Factors,axis=1)
-        DataBiomarkers=DataBiomarkers.drop(['PTID','Diagnosis','EXAMDATE'],axis=1)
-        BiomarkersList=list(DataBiomarkers)
-        BiomarkersListnew=[]
-        for i in range(len(BiomarkersList)):
-            BiomarkersListnew.append(BiomarkersList[i].replace(' ','_'))
-            BiomarkersListnew[i]=BiomarkersListnew[i].replace('-','_')
-        
-        for i in range(len(BiomarkersList)):
-            Data=Data.rename(columns={BiomarkersList[i]:BiomarkersListnew[i]})
-        ## Contruct the formula for regression. Also compute the mean value of the confounding factors for correction
-        str_confounders=''
-        mean_confval = np.zeros(len(Factors))
-        for j in range(len(Factors)):
-            str_confounders = str_confounders + '+' + Factors[j] 
-            mean_confval[j]=np.nanmean(Data[Factors[j]].values)
-        str_confounders=str_confounders[1:]
-        
-        ## Multiple linear regression
-        betalist=[]
-        for i in range(len(BiomarkersList)):
-            str_formula = BiomarkersListnew[i] + '~' + str_confounders
-            result = sm.ols(formula=str_formula, data=Data).fit()
-            betalist.append(result.params)
-        
-        ## Correction for the confounding factors
-        Deviation=(Data[Factors] - mean_confval)
-        Deviation[np.isnan(Deviation)]=0
-        for i in range(len(BiomarkersList)):
-            betai=betalist[i].values
-            betai_slopes = betai[1:]
-            CorrectionFactor = np.dot(Deviation.values,betai_slopes)
-            Data[BiomarkersListnew[i]] = Data[BiomarkersListnew[i]] - CorrectionFactor
-        Data=Data.drop(Factors,axis=1)
-        
-        for i in range(len(BiomarkersList)):
-            Data=Data.rename(columns={BiomarkersListnew[i]:BiomarkersList[i]})
-        
-    return Data,BiomarkersList
+        count=-1;
+        for Data in [DataTrain,DataTest]:
+            count=count+1;
+            DataBiomarkers=Data
+            DataBiomarkers=DataBiomarkers.drop(Factors,axis=1)
+            H = list(DataBiomarkers)
+            for j in droplist:
+                if any(j in f for f in H):
+                    DataBiomarkers=DataBiomarkers.drop(j,axis=1)
+            BiomarkersList=list(DataBiomarkers)
+            BiomarkersListnew=[]
+            for i in range(len(BiomarkersList)):
+                BiomarkersListnew.append(BiomarkersList[i].replace(' ','_'))
+                BiomarkersListnew[i]=BiomarkersListnew[i].replace('-','_')
+            
+            for i in range(len(BiomarkersList)):
+                Data=Data.rename(columns={BiomarkersList[i]:BiomarkersListnew[i]})
+            ## Contruct the formula for regression. Also compute the mean value of the confounding factors for correction
+            if count==0: # Do it only for training set
+                str_confounders=''
+                mean_confval = np.zeros(len(Factors))
+                for j in range(len(Factors)):
+                    str_confounders = str_confounders + '+' + Factors[j] 
+                    mean_confval[j]=np.nanmean(Data[Factors[j]].values)
+                str_confounders=str_confounders[1:]
+            
+                ## Multiple linear regression
+                betalist=[]
+                for i in range(len(BiomarkersList)):
+                    str_formula = BiomarkersListnew[i] + '~' + str_confounders
+                    result = sm.ols(formula=str_formula, data=Data).fit()
+                    betalist.append(result.params)
+            
+            ## Correction for the confounding factors
+            Deviation=(Data[Factors] - mean_confval)
+            Deviation[np.isnan(Deviation)]=0
+            for i in range(len(BiomarkersList)):
+                betai=betalist[i].values
+                betai_slopes = betai[1:]
+                CorrectionFactor = np.dot(Deviation.values,betai_slopes)
+                Data[BiomarkersListnew[i]] = Data[BiomarkersListnew[i]] - CorrectionFactor
+            Data=Data.drop(Factors,axis=1)
+            
+            for i in range(len(BiomarkersList)):
+                Data=Data.rename(columns={BiomarkersListnew[i]:BiomarkersList[i]})
+            if count==0:
+                DataTrain = Data.copy()
+            else:
+                DataTest = Data.copy()
+                
+    if flag_test==0:
+        DataTest=[]
+    return DataTrain,DataTest,BiomarkersList
 
 def pd2mat(pdData,BiomarkersList,flag_JointFit):
     # Convert arrays from pandas dataframe format to the matrices (which are used in DEBM algorithms)
@@ -241,8 +275,62 @@ def VisualizeOrdering(labels, pi0_all,pi0_mean, plotorder):
             newindex.append(aa)
         datapivot = datapivot.reindex(newindex)        
     xticks = np.arange(len(labels)) + 1
+    datapivot = datapivot[datapivot.columns].astype(float)
     heatmap = sns.heatmap(datapivot, cmap = 'binary', xticklabels=xticks, vmin=0, vmax=len(pi0_all))
     fig = heatmap.get_figure()
     plt.title('Positional variance diagram of the central ordering')
     plt.yticks(rotation=0) 
     plt.show()
+    
+    
+def VisualizeStaging(subj_stages,Diagnosis,Labels):
+    import numpy as np
+    import matplotlib.pyplot as plt
+    from matplotlib import rc
+    if np.max(subj_stages)>1:
+        nb=np.max(subj_stages)+2
+        freq,binc=np.histogram(subj_stages,bins=np.arange(np.max(subj_stages)+1.01))
+    else:
+        nb=50;
+        freq,binc=np.histogram(subj_stages,bins=nb)
+        
+    freq = (1.*freq)/len(subj_stages)
+    maxfreq=np.max(freq)
+    
+    idx_cn = np.where(Diagnosis==1); idx_cn = idx_cn[0]
+    idx_ad = np.where(Diagnosis==len(Labels)); idx_ad = idx_ad[0]
+    idx_mci = np.where(np.logical_and(Diagnosis > 1, Diagnosis < len(Labels))); idx_mci = idx_mci[0]
+    
+    fig, ax = plt.subplots(figsize=(12, 6))
+    plt.style.use('seaborn-whitegrid')
+    rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
+    rc('mathtext', fontset='stixsans');
+    c = ['#4daf4a','#377eb8','#e41a1c']
+    count=-1;
+    freq_all=[]
+    for idx in [idx_cn,idx_mci,idx_ad]:
+        count=count+1;
+        freq,binc=np.histogram(subj_stages[idx],bins=binc)
+        freq = (1.*freq)/len(subj_stages)
+        if count>0:
+            freq=freq+freq_all[count-1]
+        freq_all.append(freq)
+        bw=1/(2.*nb)
+        ax.bar(binc[:-1],freq,width=bw,color=c[count],label=Labels[count],zorder=3-count)
+    ax.set_xlim([-bw,bw+np.max([1,np.max(subj_stages)])])
+    ax.set_ylim([0,maxfreq])
+    if np.max(subj_stages)<1:
+        ax.set_xticks(np.arange(0,1.05,0.1))
+        ax.set_xticklabels(np.arange(0,1.05,0.1),fontsize=14)
+    else:
+        ax.set_xticks(np.arange(0,np.max(subj_stages)+0.05,1))
+        ax.set_xticklabels(np.arange(0,np.max(subj_stages)+0.05,1),fontsize=14)
+        
+    ax.set_yticks(np.arange(0,maxfreq,0.1))
+    ax.set_yticklabels(np.arange(0,maxfreq,0.1),fontsize=14)
+    ax.set_xlabel('Estimated Disease State',fontsize=16)
+    ax.set_ylabel('Frequency of occurrences',fontsize=16)
+    ax.legend(fontsize=16)
+    plt.title('Patient Staging',fontsize=16)
+    plt.show()
+        

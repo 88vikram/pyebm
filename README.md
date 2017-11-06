@@ -14,11 +14,11 @@ Step 2: Estimating a mean ordering of biomarkers.
 This toolbox supports 3 different Gaussian mixture models.
 1. Algorithm proposed in [3] by Alexandra Young et. al.
 2. Algorithm proposed in [2] by Vikram Venkatraghavan et. al.
-3. Algorithm proposed in [4] by Vikram Venkatraghavan et. al. (left out of the toolbox currently)
+3. Algorithm proposed in [4] by Vikram Venkatraghavan et. al.
 
 ## Required Libraries
 
-Python 2.7.x, numpy 1.11 or higher, pandas 0.19, sklearn 0.18, scipy 0.18, seaborn 0.7, statsmodels 0.6
+Python 2.7.x, numpy 1.11 or higher, pandas 0.20, sklearn 0.18, scipy 0.18, seaborn 0.7, statsmodels 0.8
 
 ## Explanation of Inputs:
 
@@ -27,9 +27,11 @@ Python 2.7.x, numpy 1.11 or higher, pandas 0.19, sklearn 0.18, scipy 0.18, seabo
 ### (optional) MethodOptions:
 Named Tuple with any or all of the following fields:
 
-*   MixtureModel - Choose the mixture model algorithm (Options: 'vv1'[2] (default), 'vv2'[4] (left out), 'ay'[3])
+*   MixtureModel - Choose the mixture model algorithm (Options: 'vv1'[2],'vv2'(default)[4], 'ay'[3]) 
+[Warning - using Option ay in Mixture Model. The GMM optimization is sub-optimal as compared to the MATLAB implementation of the same algorithm. Would be happy to incorporate any fixes to this problem.]
 *   Bootstrap - Number of iterations in the bootstrapping [default - Turned Off].
-*   Staging - Choose the patient staging algorithm (Options 'ml' for most likely stage[1,2,3],'exp' for expected stage[4])
+*   PatientStaging - Choose the patient staging algorithm, with a two element list consisting of ['exp'/'ml','p'/'l']. The first element in the list chooses 'ml' for most likely stage[1,2,3] or 'exp' for expected stage[4]. The second element in the list chooses 'l' for likelihood[1,2,3] or 'p' for posterior probability[4].
+*   (Only in EBM.Control) NStartpoints, Niterations and N_MCMC are algorithm specific parameters for EBM method.
 
 ### (optional) VerboseOptions:
 Named Tuple with any or all of the following fields:
@@ -38,12 +40,16 @@ Named Tuple with any or all of the following fields:
 *   Ordering - plots the central ordering as a positional variance diagram [default - Turned Off].
 *   PlotOrder - positional variance diagram has mean positions along the main diagonal [default - Turned Off]. This is used only when Ordering is Turned on.
 *   WriteBootstrapData - String which specifies the location and name of the files to save the data used in different bootstrap iterations. [default - Turned Off]
+*   PatientStaging - plots the patient stages of subjects in different classes. [default - Turned Off]
 
 ### (optional) Factors:
 Confounding Factors used for correcting the biomarkers. By Default, it is Age, Sex, ICV (intra-cranial volume)
 
 ### (optional) Labels:
 Clinical list of labels in the dataset. By Default, it is CN, MCI, AD.
+
+### (optional) DataTest:
+If given, DataTest will be used as a test-set to evaluate the disease progression model obtained using DataIn.
 
 ### References:
 

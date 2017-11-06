@@ -13,31 +13,48 @@
 # *
 # *=========================================================================*/
 
-## An example function call
-
-import DEBM
-pi0_mean,pi0_all,params_opt_all,BiomarkersList,event_centers_all,p_yes_all=DEBM.Control('ADNI_7.csv')
-print [BiomarkersList[x] for x in pi0_mean]
+## Simplest function call (with default parameters)
 
 import EBM
-pi0_mean,pi0_all,params_opt_all,BiomarkersList,event_centers_all=EBM.Control('ADNI_7.csv')
-print [BiomarkersList[x] for x in pi0_mean]
+ModelOutput,SubjTrain,SubjTest=EBM.fit('ADNI_7.csv')
+print [ModelOutput.BiomarkerList[x] for x in ModelOutput.MeanCentralOrdering]
 
-## Another Example with Visual Biomarker Distributions as output
+## Example with Visual Biomarker Distributions as output
 
 from collections import namedtuple
 MO = namedtuple('MethodOptions','MixtureModel Bootstrap')
-MO.Bootstrap=0; MO.MixtureModel='vv1';
+MO.Bootstrap=0; MO.MixtureModel='vv2';
 VO = namedtuple('VerboseOptions','Distributions')
 VO.Distributions=1; 
-pi0_mean,pi0_all,params_opt_all,BiomarkersList,event_centers_all,p_yes_all=DEBM.Control('ADNI_7.csv',MethodOptions=MO,VerboseOptions=VO)
+ModelOutput,SubjTrain,SubjTest=EBM.fit('ADNI_7.csv',MethodOptions=MO,VerboseOptions=VO)
 
-## Another Example with bootstrapping and visual output
+## Example with bootstrapping and visual output
+
 from collections import namedtuple
 MO = namedtuple('MethodOptions','MixtureModel Bootstrap')
-MO.Bootstrap=100; MO.MixtureModel='vv1';
+MO.Bootstrap=5; MO.MixtureModel='vv2';
 VO = namedtuple('VerboseOptions','Ordering PlotOrder Distributions')
 VO.Ordering=1; VO.PlotOrder=1; VO.Distributions=0; 
-pi0_mean,pi0_all,params_opt_all,BiomarkersList,event_centers_all,p_yes_all=DEBM.Control('ADNI_7.csv',MethodOptions=MO,VerboseOptions=VO)
+ModelOutput,SubjTrain,SubjTest=EBM.fit('ADNI_7.csv',MethodOptions=MO,VerboseOptions=VO)
 
-print [BiomarkersList[x] for x in pi0_mean]
+print [ModelOutput.BiomarkerList[x] for x in ModelOutput.MeanCentralOrdering]
+
+## Example with Patient Staging and visual output. Also, a pandas dataframe can be sent as an input instead of CSV
+from collections import namedtuple
+MO = namedtuple('MethodOptions','MixtureModel Bootstrap PatientStaging')
+MO.Bootstrap=0; MO.MixtureModel='vv2'; MO.PatientStaging=['ml','l']
+VO = namedtuple('VerboseOptions','Distributions PatientStaging')
+VO.PatientStaging=1; VO.Distributions=0; 
+import pandas as pd
+D=pd.read_csv('ADNI_7.csv')
+ModelOutput,SubjTrain,SubjTest=EBM.fit(D,MethodOptions=MO,VerboseOptions=VO)
+
+
+from collections import namedtuple
+MO = namedtuple('MethodOptions','MixtureModel Bootstrap PatientStaging')
+MO.Bootstrap=0; MO.MixtureModel='vv1'; MO.PatientStaging=['exp','p']
+VO = namedtuple('VerboseOptions','Distributions PatientStaging')
+VO.PatientStaging=1; VO.Distributions=0; 
+import pandas as pd
+D=pd.read_csv('ADNI_7.csv')
+ModelOutput,SubjTrain,SubjTest=EBM.fit(D,MethodOptions=MO,VerboseOptions=VO)

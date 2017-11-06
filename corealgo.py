@@ -97,7 +97,31 @@ def GMM_Control(Data_all,Data_CN_pruned,Data_AD_pruned,params_nobias,type_opt=1,
                 bnds[(j*4)+1,1] = params[i,1,j] + itvl*(params[i,1,j]/np.sqrt(Ncni-2))
                 bnds[(j*4)+3,0] = params[i,3,j] - itvl*(params[i,3,j]/np.sqrt(Nadi-2))
                 bnds[(j*4)+3,1] = params[i,3,j] + itvl*(params[i,3,j]/np.sqrt(Nadi-2))
-
+        else:
+            bnds[-1,0]=params_nobias[i,4,0];
+            bnds[-1,1]=params_nobias[i,4,0];
+            if type_opt==2:
+                for j in range(Nfeats):
+                    bnds[(j*4)+0,0] = np.min([params[i,0,j],params[i,2,j]])
+                    bnds[(j*4)+0,1] = np.max([params[i,0,j],params[i,2,j]])
+                    bnds[(j*4)+2,0] = np.min([params[i,0,j],params[i,2,j]])
+                    bnds[(j*4)+2,1] = np.max([params[i,0,j],params[i,2,j]])
+                            
+                    bnds[(j*4)+1,0] = params[i,1,j]
+                    bnds[(j*4)+1,1] = params[i,1,j]*2
+                    bnds[(j*4)+3,0] = params[i,3,j]
+                    bnds[(j*4)+3,1] = params[i,3,j]*2
+            else:
+                for j in range(Nfeats):
+                    bnds[(j*4)+0,0] = np.min([params_pruned[i,0,j],params_pruned[i,2,j]])
+                    bnds[(j*4)+0,1] = np.max([params_pruned[i,0,j],params_pruned[i,2,j]])
+                    bnds[(j*4)+2,0] = np.min([params_pruned[i,0,j],params_pruned[i,2,j]])
+                    bnds[(j*4)+2,1] = np.max([params_pruned[i,0,j],params_pruned[i,2,j]])
+                            
+                    bnds[(j*4)+1,0] = params_pruned[i,1,j]
+                    bnds[(j*4)+1,1] = params_pruned[i,1,j]*2
+                    bnds[(j*4)+3,0] = params_pruned[i,3,j]
+                    bnds[(j*4)+3,1] = params_pruned[i,3,j]*2
         bnds_all.append(bnds)
         params[i,:,:]=GMM(Dalli_valid_c,Nfeats,params[i,:,:],bnds)
     
@@ -149,6 +173,33 @@ def Classify(Data4Classification,params):
         p_yes,p_no,likeli_pre,likeli_post=calculate_prob_mmN(Data4Classification,params,val_invalid=np.nan);
 
     return p_yes,p_no,likeli_post,likeli_pre
+
+def Staging(pi0,event_centers,likeli_post,likeli_pre,type_staging):
+    import numpy as np
+    from numpy import matlib
+
+    L_yes=np.divide(likeli_post,likeli_post+likeli_pre+1e-100)
+    L_no = 1 - L_yes
+    event_centers_pad=np.insert(event_centers,0,0)
+    event_centers_pad=np.append(event_centers_pad,1)
+    pk_s=np.diff(event_centers_pad)
+    pk_s[:]=1;
+    
+    m=L_yes.shape
+    prob_stage = np.zeros((m[0],m[1]+1))
+    p_no_perm = L_no[:,pi0];
+    p_yes_perm = L_yes[:,pi0];
+    for j in range(m[1]+1):
+        prob_stage[:,j]=pk_s[j]*np.multiply(np.prod(p_yes_perm[:,:j],axis=1),np.prod(p_no_perm[:,j:],axis=1))
+
+    all_stages_rep2=matlib.repmat(event_centers_pad[:-1],m[0],1)
+    
+    if type_staging[0]=='exp':
+        subj_stages=np.divide(np.mean(np.multiply(all_stages_rep2,prob_stage),axis=1),np.mean(prob_stage,axis=1)+1e-100)
+    elif type_staging[0]=='ml':
+        subj_stages=np.argmax(prob_stage,axis=1)
+    
+    return subj_stages
 
 def adhoc(Data,params,n_startpoints,n_iterations,mix):
     import numpy as np
