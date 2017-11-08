@@ -14,10 +14,11 @@
 # *=========================================================================*/
 
 ## Simplest function call (with default parameters)
+from __future__ import print_function
 
 import EBM
 ModelOutput,SubjTrain,SubjTest=EBM.fit('ADNI_7.csv')
-print [ModelOutput.BiomarkerList[x] for x in ModelOutput.MeanCentralOrdering]
+print([ModelOutput.BiomarkerList[x] for x in ModelOutput.MeanCentralOrdering])
 
 ## Example with Visual Biomarker Distributions as output
 
@@ -37,7 +38,7 @@ VO = namedtuple('VerboseOptions','Ordering PlotOrder Distributions')
 VO.Ordering=1; VO.PlotOrder=1; VO.Distributions=0; 
 ModelOutput,SubjTrain,SubjTest=EBM.fit('ADNI_7.csv',MethodOptions=MO,VerboseOptions=VO)
 
-print [ModelOutput.BiomarkerList[x] for x in ModelOutput.MeanCentralOrdering]
+print([ModelOutput.BiomarkerList[x] for x in ModelOutput.MeanCentralOrdering])
 
 ## Example with Patient Staging and visual output. Also, a pandas dataframe can be sent as an input instead of CSV
 from collections import namedtuple

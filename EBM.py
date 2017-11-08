@@ -12,6 +12,7 @@
 # *  limitations under the License.
 # *
 # *=========================================================================*/
+from __future__ import print_function
 
 def fit(DataIn,MethodOptions=False,VerboseOptions=False,Factors=['Age','Sex','ICV'],Labels=['CN','MCI','AD'],DataTest=[]):
     
@@ -92,7 +93,7 @@ def fit(DataIn,MethodOptions=False,VerboseOptions=False,Factors=['Age','Sex','IC
     for i in range(len(data_AD_raw_list)): ## For each bootstrapped iteration
         ## Reject possibly wrongly labeled data 
         if len(data_AD_raw_list)>1:
-            print [i],
+            print([i]),
         data_AD_raw = data_AD_raw_list[i];
         data_CN_raw = data_CN_raw_list[i];
         Data_all =  data_all_list[i];                             

@@ -12,6 +12,7 @@
 # *  limitations under the License.
 # *
 # *=========================================================================*/
+from __future__ import print_function
 
 def calculate_likelihood_gmm(param,data,dummy):
     # The dummy argument is a hack to overcome how single element tuple is handled 

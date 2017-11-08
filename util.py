@@ -199,14 +199,14 @@ def VisualizeBiomarkerDistribution(Data_all,params_all,BiomarkersList):
     
     m=np.shape(Data_all)
     n=len(params_all)
-    fig, ax = plt.subplots(1+m[1]/3, 3, figsize=(13, 4*(1+m[1]/3)))
+    fig, ax = plt.subplots(int(round(1+m[1]/3)), 3, figsize=(13, 4*(1+m[1]/3)))
     for i in range(m[1]):
             Dalli=Data_all[:,i,0];
             valid_data=np.logical_not(np.isnan(Dalli))
             Dallis=Dalli[valid_data].reshape(-1,1); Dallis=Dallis[:,0];
             x_grid=np.linspace(np.min(Dallis),np.max(Dallis),1000)
             for j in range(n):
-                i1 = i/3;
+                i1 = int(round(i/3));
                 j1 = np.remainder(i,3)
                 paramsij=params_all[j][i,:];
                 norm_pre=scipy.stats.norm(loc=paramsij[0], scale=paramsij[1]);

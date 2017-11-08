@@ -13,6 +13,7 @@
 # *  limitations under the License.
 # *
 # *=========================================================================*/
+from __future__ import print_function
 
 def Reject(data_AD,data_CN):
 
