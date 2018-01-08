@@ -128,6 +128,8 @@ def calculate_prob_mm(Data,params,val_invalid=0.5):
         p[valid_indices]=np.divide(likeli_post*r,(likeli_post*r)+(1-r)*likeli_pre+1e-100);
         likeli_pre_all[valid_indices,i]=likeli_pre
         likeli_post_all[valid_indices,i]=likeli_post
+        likeli_pre_all[invalid_indices,i] = 0.5
+        likeli_post_all[invalid_indices,i] = 0.5
         p_yes[:,i]=p;
     p_no=1-p_yes;
     return p_yes,p_no,likeli_pre_all,likeli_post_all
@@ -171,6 +173,8 @@ def calculate_prob_mmN(Data,params,val_invalid=0.5):
         p[valid_indices]=np.divide(likeli_post*r,(likeli_post*r)+(1-r)*likeli_pre+1e-100);
         likeli_pre_all[valid_indices,i]=likeli_pre
         likeli_post_all[valid_indices,i]=likeli_post
+        likeli_pre_all[invalid_indices,i] = 0.5
+        likeli_post_all[invalid_indices, i] = 0.5
         p_yes[:,i]=p;
     p_no=1-p_yes;
     return p_yes,p_no,likeli_pre,likeli_post
