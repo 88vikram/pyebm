@@ -187,6 +187,8 @@ def fit(DataIn,MethodOptions=False,VerboseOptions=False,Factors=['Age','Sex','IC
         util.VisualizeBiomarkerDistribution(Data_all,params_all,BiomarkersList);
     if DVO.PatientStaging==1:
         util.VisualizeStaging(subj_stages,pdData_all['Diagnosis'],Labels)
+        if len(Data_test_all)>0:
+            util.VisualizeStaging(subj_stages_test,pdDataTest_all['Diagnosis'],Labels)
                                            
     if DMO.Bootstrap==False:
         pi0_all=pi0_all[0]
