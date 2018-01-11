@@ -33,10 +33,10 @@ def fit(DataIn,MethodOptions=False,VerboseOptions=False,Factors=['Age','Sex','IC
         for fld in VerboseOptions._fields:
             setattr(DVO,fld,getattr(VerboseOptions, fld))
     
-    import corealgo as ca                 
-    import util
-    import weighted_mallows as wma
-    import MixtureModel as mm
+    from pyebm import corealgo as ca                 
+    from pyebm import util
+    from pyebm import weighted_mallows as wma
+    from pyebm import mixture_model as mm
     import numpy as np
     from sklearn.utils import resample
     

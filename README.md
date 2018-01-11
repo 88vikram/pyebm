@@ -18,7 +18,7 @@ This toolbox supports 3 different Gaussian mixture models.
 
 ## Required Libraries
 
-Python 2.7.x, numpy 1.11 or higher, pandas 0.20, sklearn 0.18, scipy 0.18, seaborn 0.7, statsmodels 0.8
+Python 2.7 / 3.4, numpy 1.13, pandas 0.20, sklearn 0.19, scipy 0.18, seaborn 0.8, statsmodels 0.8
 
 ## Explanation of Inputs:
 

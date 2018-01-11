@@ -13,7 +13,7 @@
 # *
 # *=========================================================================*/
 
-import util
+from pyebm import util
 import numpy 
 import copy
 

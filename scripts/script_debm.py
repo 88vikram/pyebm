@@ -16,9 +16,9 @@
 ## Simplest function call (with default parameters)
 from __future__ import print_function
 
-import DEBM
+from pyebm import debm, ebm
 
-ModelOutput, SubjTrain, SubjTest = DEBM.fit('ADNI_7.csv')
+ModelOutput, SubjTrain, SubjTest = debm.fit('./resources/ADNI_7.csv')
 print([ModelOutput.BiomarkerList[x] for x in ModelOutput.MeanCentralOrdering])
 
 ## Example with Visual Biomarker Distributions as output
@@ -30,7 +30,7 @@ MO.Bootstrap = 0;
 MO.MixtureModel = 'vv2';
 VO = namedtuple('VerboseOptions', 'Distributions')
 VO.Distributions = 1;
-ModelOutput, SubjTrain, SubjTest = DEBM.fit('ADNI_7.csv', MethodOptions=MO, VerboseOptions=VO)
+ModelOutput, SubjTrain, SubjTest = debm.fit('./resources/ADNI_7.csv', MethodOptions=MO, VerboseOptions=VO)
 
 ## Example with bootstrapping and visual output
 
@@ -43,7 +43,7 @@ VO = namedtuple('VerboseOptions', 'Ordering PlotOrder Distributions')
 VO.Ordering = 1;
 VO.PlotOrder = 1;
 VO.Distributions = 0;
-ModelOutput, SubjTrain, SubjTest = DEBM.fit('ADNI_7.csv', MethodOptions=MO, VerboseOptions=VO)
+ModelOutput, SubjTrain, SubjTest = debm.fit('./resources/ADNI_7.csv', MethodOptions=MO, VerboseOptions=VO)
 
 print([ModelOutput.BiomarkerList[x] for x in ModelOutput.MeanCentralOrdering])
 
@@ -59,8 +59,8 @@ VO.PatientStaging = 1;
 VO.Distributions = 0;
 import pandas as pd
 
-D = pd.read_csv('ADNI_7.csv')
-ModelOutput, SubjTrain, SubjTest = DEBM.fit(D, MethodOptions=MO, VerboseOptions=VO)
+D = pd.read_csv('./resources/ADNI_7.csv')
+ModelOutput, SubjTrain, SubjTest = debm.fit(D, MethodOptions=MO, VerboseOptions=VO)
 
 from collections import namedtuple
 
@@ -73,8 +73,8 @@ VO.PatientStaging = 1;
 VO.Distributions = 0;
 import pandas as pd
 
-D = pd.read_csv('ADNI_7.csv')
-ModelOutput, SubjTrain, SubjTest = DEBM.fit(D, MethodOptions=MO, VerboseOptions=VO)
+D = pd.read_csv('./resources/ADNI_7.csv')
+ModelOutput, SubjTrain, SubjTest = debm.fit(D, MethodOptions=MO, VerboseOptions=VO)
 
 ## Comparing AUCs of Patient Staging using Cross-Validation with Training and Testset
 ## Comparison will be done between DEBM / EBM / SVM
@@ -96,7 +96,7 @@ VO.PatientStaging = 0;
 VO.Distributions = 0;
 import pandas as pd
 
-D = pd.read_csv('ADNI_7.csv');
+D = pd.read_csv('./resources/ADNI_7.csv');
 Y = D['Diagnosis'].copy();
 Y[Y == 'CN'] = 0;
 Y[Y == 'AD'] = 2;
@@ -106,7 +106,6 @@ from sklearn.model_selection import KFold as KF
 from sklearn import metrics
 import sklearn.svm as svm
 import numpy as np
-import EBM
 
 skf = KF(n_splits=10, shuffle=True, random_state=42)
 print("Comparing the AUCs of CN / AD Classification:")
@@ -119,8 +118,8 @@ for train_index, test_index in skf.split(D, pd.to_numeric(Y.values)):
     count = count + 1;
     print([count])
     DTrain, DTest = D.iloc[train_index], D.iloc[test_index]
-    ModelOutput1, SubjTrain1, SubjTest1 = DEBM.fit(DTrain, MethodOptions=MO1, VerboseOptions=VO, DataTest=DTest)
-    ModelOutput2, SubjTrain2, SubjTest2 = EBM.fit(DTrain, MethodOptions=MO2, VerboseOptions=VO, DataTest=DTest)
+    ModelOutput1, SubjTrain1, SubjTest1 = debm.fit(DTrain, MethodOptions=MO1, VerboseOptions=VO, DataTest=DTest)
+    ModelOutput2, SubjTrain2, SubjTest2 = ebm.fit(DTrain, MethodOptions=MO2, VerboseOptions=VO, DataTest=DTest)
     Y = DTest['Diagnosis']
     idx = Y != 'MCI';
     Y = Y[idx];
