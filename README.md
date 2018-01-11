@@ -1,9 +1,9 @@
-# pyEBM - A toolbox for Event Based Models
+# pyebm - A toolbox for Event Based Models
 
 The event-based model (EBM) for data-driven disease progression modeling estimates the sequence in which biomarkers for a disease become abnormal. This helps in understanding the dynamics of disease progression and facilitates early diagnosis by staging patients on a disease progression timeline. A more accurate and scalable EBM algorithm (Discriminative EBM) was introduced in [2]. 
 
-Call EBM.Control to find the central ordering in a few biomarkers using method [1]
-Call DEBM.Control to find the central ordering in a few biomarkers using method [2]
+Call ebm.fit to find the central ordering in a few biomarkers using method [1]
+Call debm.fit to find the central ordering in a few biomarkers using method [2]
 
 EBM and its variants typically consists of 2 steps. 
 
@@ -50,6 +50,32 @@ Clinical list of labels in the dataset. By Default, it is CN, MCI, AD.
 
 ### (optional) DataTest:
 If given, DataTest will be used as a test-set to evaluate the disease progression model obtained using DataIn.
+
+## Explanation of Outputs:
+
+### ModelOutput:
+A stucture with the following fields:
+* BiomarkerList - List of Biomarkers used in EBM
+* BiomarkerParameters - Mixture Model parameters for the biomarkers
+* CentralOrderings - Central Ordering in different boostrap iterations. When bootstrapping is turned off, this gives the central ordering for the entire dataset.
+* MeanCentralOrdering - Mean Central Ordering among different bootstrap iterations. When bootstrapping is turned off, this is the same as CentralOrderings.
+* EventCenters - Event centers which determins how close the events are to each other.
+
+### SubjTrainAll:
+A list where each element is a pandas dataframe corresponding to different bootstrap iterations. 
+Each dataframe consists of the the following fields :
+* PTID - patient identifiers used in training
+* Ordering - Subject-wise orderings of the subjects used for training the model
+* Weights - Probabilistic weights for the each position in the subject-wise ordering
+* Stages - Staging of each subject in the training dataset.
+
+### SubjTestAll:
+A list where each element is a pandas dataframe corresponding to different bootstrap iterations. 
+Each dataframe consists of the the following fields:
+* PTID - patient identifiers used in testing
+* Ordering - Subject-wise orderings of the subjects used for testing the model
+* Weights - Probabilistic weights for the each position in the subject-wise ordering
+* Stages - Staging of each subject in the testing dataset.
 
 ### References:
 
