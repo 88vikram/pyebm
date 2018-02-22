@@ -18,7 +18,7 @@ from __future__ import print_function
 
 from pyebm import debm, ebm
 
-ModelOutput, SubjTrain, SubjTest = debm.fit('./resources/ADNI_7.csv')
+ModelOutput, SubjTrain, SubjTest = debm.fit('./resources/Data_7.csv')
 print([ModelOutput.BiomarkerList[x] for x in ModelOutput.MeanCentralOrdering])
 
 ## Example with Visual Biomarker Distributions as output
@@ -30,7 +30,7 @@ MO.Bootstrap = 0;
 MO.MixtureModel = 'vv2';
 VO = namedtuple('VerboseOptions', 'Distributions')
 VO.Distributions = 1;
-ModelOutput, SubjTrain, SubjTest = debm.fit('./resources/ADNI_7.csv', MethodOptions=MO, VerboseOptions=VO)
+ModelOutput, SubjTrain, SubjTest = debm.fit('./resources/Data_7.csv', MethodOptions=MO, VerboseOptions=VO)
 
 ## Example with bootstrapping and visual output
 
@@ -43,7 +43,7 @@ VO = namedtuple('VerboseOptions', 'Ordering PlotOrder Distributions')
 VO.Ordering = 1;
 VO.PlotOrder = 1;
 VO.Distributions = 0;
-ModelOutput, SubjTrain, SubjTest = debm.fit('./resources/ADNI_7.csv', MethodOptions=MO, VerboseOptions=VO)
+ModelOutput, SubjTrain, SubjTest = debm.fit('./resources/Data_7.csv', MethodOptions=MO, VerboseOptions=VO)
 
 print([ModelOutput.BiomarkerList[x] for x in ModelOutput.MeanCentralOrdering])
 
@@ -73,7 +73,7 @@ VO.PatientStaging = 1;
 VO.Distributions = 0;
 import pandas as pd
 
-D = pd.read_csv('./resources/ADNI_7.csv')
+D = pd.read_csv('./resources/Data_7.csv')
 ModelOutput, SubjTrain, SubjTest = debm.fit(D, MethodOptions=MO, VerboseOptions=VO)
 
 ## Comparing AUCs of Patient Staging using Cross-Validation with Training and Testset
@@ -96,7 +96,7 @@ VO.PatientStaging = 0;
 VO.Distributions = 0;
 import pandas as pd
 
-D = pd.read_csv('./resources/ADNI_7.csv');
+D = pd.read_csv('./resources/Data_7.csv');
 Y = D['Diagnosis'].copy();
 Y[Y == 'CN'] = 0;
 Y[Y == 'AD'] = 2;
@@ -104,7 +104,6 @@ Y[Y == 'MCI'] = 1;
 
 from sklearn.model_selection import KFold as KF
 from sklearn import metrics
-import sklearn.svm as svm
 import numpy as np
 
 skf = KF(n_splits=10, shuffle=True, random_state=42)
@@ -112,7 +111,7 @@ print("Comparing the AUCs of CN / AD Classification:")
 print("Cross-Validation Iteration:")
 auc1 = [];
 auc2 = [];
-auc3 = [];
+
 count = -1
 for train_index, test_index in skf.split(D, pd.to_numeric(Y.values)):
     count = count + 1;
@@ -133,32 +132,5 @@ for train_index, test_index in skf.split(D, pd.to_numeric(Y.values)):
     S = S.values[idx];
     auc2.append(metrics.roc_auc_score(pd.to_numeric(Y.values), S))
 
-    clf = svm.SVC(kernel='rbf', class_weight='balanced', probability=True, decision_function_shape='ovr')
-    Dtrainmat = DTrain[ModelOutput1.BiomarkerList].values
-    YT = DTrain['Diagnosis'].copy();
-    idxt = YT != 'MCI';
-    YT = YT[idxt];
-    YT[YT == 'CN'] = 0;
-    YT[YT == 'AD'] = 1;
-    Dtrainmat = Dtrainmat[idxt, :]
-    m = []
-    s = []
-    for i in range(Dtrainmat.shape[1]):
-        m.append(np.nanmean(Dtrainmat[:, i]))
-        s.append(np.nanstd(Dtrainmat[:, i]))
-        Dtrainmat[np.isnan(Dtrainmat[:, i]), i] = m[i]
-        Dtrainmat[:, i] = (Dtrainmat[:, i] - m[i]) / s[i]
-    clf.fit(Dtrainmat, pd.to_numeric(YT))
-
-    Dtestmat = DTest[ModelOutput1.BiomarkerList].values
-    Dtestmat = Dtestmat[idx, :]
-    for i in range(Dtestmat.shape[1]):
-        Dtestmat[np.isnan(Dtestmat[:, i]), i] = m[i]
-        Dtestmat[:, i] = (Dtestmat[:, i] - m[i]) / s[i]
-    df = clf.decision_function(Dtestmat)
-
-    auc3.append(metrics.roc_auc_score(pd.to_numeric(Y), df))
-
 print("\nMean AUC using DEBM with Patient Staging Option:", MO1.PatientStaging, '--->', np.mean(auc1))
 print("Mean AUC using EBM with Patient Staging Option:", MO2.PatientStaging, '--->', np.mean(auc2))
-print("Mean AUC using SVM: --->", np.mean(auc3))
