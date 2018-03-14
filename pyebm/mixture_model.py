@@ -37,8 +37,6 @@ def GMM_AY(Data_all,data_AD_raw,data_CN_raw):
     
     import numpy as np
     import scipy.optimize as opt
-    print('Warning using Option ay in Mixture Model:')
-    print('The GMM optimization is sub-optimal as compared to the MATLAB implementation of the same algorithm.')
     Neve = data_AD_raw.shape[1]
     params = np.zeros((Neve,5,1));
     for i in range(Neve):

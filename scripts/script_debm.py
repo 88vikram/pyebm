@@ -53,7 +53,7 @@ from collections import namedtuple
 MO = namedtuple('MethodOptions', 'MixtureModel Bootstrap PatientStaging')
 MO.Bootstrap = 0;
 MO.MixtureModel = 'vv2';
-MO.PatientStaging = ['ml', 'l']
+MO.PatientStaging = ['exp', 'p']
 VO = namedtuple('VerboseOptions', 'Distributions PatientStaging')
 VO.PatientStaging = 1;
 VO.Distributions = 0;

@@ -65,14 +65,21 @@ def fit(DataIn,MethodOptions=False,VerboseOptions=False,Factors=['Age','Sex','IC
         bs_ptid_AD_raw=resample(ptid_AD_raw,random_state=i);
         bs_data_CN_raw=resample(data_CN_raw,random_state=i);
         bs_ptid_CN_raw=resample(ptid_CN_raw,random_state=i);
-        bs_data_MCI_raw=resample(data_MCI_raw,random_state=i);
-        bs_ptid_MCI_raw=resample(ptid_MCI_raw,random_state=i);                        
-        bs_data_all=np.concatenate((bs_data_AD_raw,bs_data_CN_raw,bs_data_MCI_raw))  
-        bs_ptid_all=np.concatenate((bs_ptid_AD_raw,bs_ptid_CN_raw,bs_ptid_MCI_raw))  
+        if len(data_MCI_raw)>0:
+            bs_data_MCI_raw=resample(data_MCI_raw,random_state=i);
+            bs_ptid_MCI_raw=resample(ptid_MCI_raw,random_state=i);                        
+            bs_data_all=np.concatenate((bs_data_AD_raw,bs_data_CN_raw,bs_data_MCI_raw))  
+            bs_ptid_all=np.concatenate((bs_ptid_AD_raw,bs_ptid_CN_raw,bs_ptid_MCI_raw)) 
+        else:
+            bs_data_all=np.concatenate((bs_data_AD_raw,bs_data_CN_raw))  
+            bs_ptid_all=np.concatenate((bs_ptid_AD_raw,bs_ptid_CN_raw)) 
         labels_AD = np.zeros(len(bs_data_AD_raw))+3
         labels_CN = np.zeros(len(bs_data_CN_raw))+1
-        labels_MCI = np.zeros(len(bs_data_MCI_raw))+2
-        labels_all=np.concatenate((labels_AD,labels_CN,labels_MCI))
+        if len(data_MCI_raw)>0:
+            labels_MCI = np.zeros(len(bs_data_MCI_raw))+2
+            labels_all=np.concatenate((labels_AD,labels_CN,labels_MCI))
+        else:
+            labels_all=np.concatenate((labels_AD,labels_CN))
         if type(DVO.WriteBootstrapData)==str:
             str_out=DVO.WriteBootstrapData+'_'+str(i)+'.csv'
             Dbs=pd.DataFrame(bs_data_all[:,:,0],columns=BiomarkersList)
@@ -91,7 +98,7 @@ def fit(DataIn,MethodOptions=False,VerboseOptions=False,Factors=['Age','Sex','IC
     for i in range(len(data_AD_raw_list)): ## For each bootstrapped iteration
         ## Reject possibly wrongly labeled data 
         if len(data_AD_raw_list)>1:
-            print([i]),
+            print([i],end=""),
         data_AD_raw = data_AD_raw_list[i];
         data_CN_raw = data_CN_raw_list[i];
         Data_all =  data_all_list[i];                             
@@ -176,6 +183,7 @@ def fit(DataIn,MethodOptions=False,VerboseOptions=False,Factors=['Age','Sex','IC
     ## Visualize Results
     if DVO.Ordering==1:
         util.VisualizeOrdering(BiomarkersList, pi0_all,pi0_mean,DVO.PlotOrder);
+        util.VisualizeEventCenters(BiomarkersList,pi0_mean, pi0_all,event_centers_all);
     if DVO.Distributions==1:
         params_all=[params_opt];
         util.VisualizeBiomarkerDistribution(Data_all,params_all,BiomarkersList);

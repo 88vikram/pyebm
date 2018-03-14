@@ -276,12 +276,44 @@ def VisualizeOrdering(labels, pi0_all,pi0_mean, plotorder):
         datapivot = datapivot.reindex(newindex)        
     xticks = np.arange(len(labels)) + 1
     datapivot = datapivot[datapivot.columns].astype(float)
-    heatmap = sns.heatmap(datapivot, cmap = 'binary', xticklabels=xticks, vmin=0, vmax=len(pi0_all))
-    fig = heatmap.get_figure()
+    fig, ax = plt.subplots(1,1,figsize=(7, 7))
+    heatmap = sns.heatmap(datapivot, cmap = 'binary', xticklabels=xticks, vmin=0, vmax=len(pi0_all),ax=ax)
+    plt.sca(ax)
     plt.title('Positional variance diagram of the central ordering')
     plt.yticks(rotation=0) 
     plt.show()
     
+def VisualizeEventCenters(labels, pi0_mean, pi0_all, event_centers):
+    import numpy as np
+    import matplotlib.pyplot as plt
+    import copy as cp
+    
+    event_centers_ordered = cp.deepcopy(event_centers)
+    for i in range(len(event_centers)):
+        count=-1
+        for x in pi0_all[i]:
+            count=count+1;
+            event_centers_ordered[i][x] = cp.deepcopy(event_centers[i][count])
+    
+    evn = np.asarray(event_centers_ordered)
+    evn_full = np.mean(evn,axis=0)
+    
+    fig, ax = plt.subplots(1,1,figsize=(7, 7))
+    for i in range(len(labels)):
+        (_, caps, _)=ax.errorbar(evn_full[i],len(labels)-1-pi0_mean.index(i),xerr=np.std(evn[:,i],axis=0),fmt='--o',color='b',alpha=0.7,barsabove=True,capsize=1)
+        for cap in caps:
+            cap.set_markeredgewidth(5)
+    ax.set_yticks(np.arange(0,len(labels)-1+.1,1))
+    ax.set_yticklabels([labels[x] for x in pi0_mean[::-1]],rotation=45)
+    #ax.get_yaxis().set_visible(False)
+    ax.set_xlim([0,1])
+    ax.set_xticks(np.arange(0,1.,0.1))
+    ax.set_xticklabels(np.arange(0,1.,0.1))
+    ax.grid(b=True, axis='x', color='k', linestyle='--',alpha=0.5,which='major')
+    ax.set_xlabel('Disease Stage')
+    ax.set_ylim([-0.5,0.5+len(labels)-1])
+    ax.set_title('Event Center Variance Diagram')
+    plt.subplots_adjust(wspace=0, hspace=0)
     
 def VisualizeStaging(subj_stages,Diagnosis,Labels):
     import numpy as np
@@ -328,7 +360,7 @@ def VisualizeStaging(subj_stages,Diagnosis,Labels):
         
     ax.set_yticks(np.arange(0,maxfreq,0.1))
     ax.set_yticklabels(np.arange(0,maxfreq,0.1),fontsize=14)
-    ax.set_xlabel('Estimated Disease State',fontsize=16)
+    ax.set_xlabel('Estimated Disease Stage',fontsize=16)
     ax.set_ylabel('Frequency of occurrences',fontsize=16)
     ax.legend(fontsize=16)
     plt.title('Patient Staging',fontsize=16)
