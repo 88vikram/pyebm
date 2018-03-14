@@ -19,7 +19,7 @@ from __future__ import print_function
 import os
 from pyebm import ebm
 
-ModelOutput,SubjTrain,SubjTest=ebm.fit('./resources/ADNI_7.csv')
+ModelOutput,SubjTrain,SubjTest=ebm.fit('./resources/Data_7.csv')
 print([ModelOutput.BiomarkerList[x] for x in ModelOutput.MeanCentralOrdering])
 
 ## Example with Visual Biomarker Distributions as output
@@ -29,7 +29,7 @@ MO = namedtuple('MethodOptions','MixtureModel Bootstrap')
 MO.Bootstrap=0; MO.MixtureModel='vv2';
 VO = namedtuple('VerboseOptions','Distributions')
 VO.Distributions=1; 
-ModelOutput,SubjTrain,SubjTest=ebm.fit('./resources/ADNI_7.csv',MethodOptions=MO,VerboseOptions=VO)
+ModelOutput,SubjTrain,SubjTest=ebm.fit('./resources/Data_7.csv',MethodOptions=MO,VerboseOptions=VO)
 
 ## Example with bootstrapping and visual output
 
@@ -38,7 +38,7 @@ MO = namedtuple('MethodOptions','MixtureModel Bootstrap')
 MO.Bootstrap=5; MO.MixtureModel='vv2';
 VO = namedtuple('VerboseOptions','Ordering PlotOrder Distributions')
 VO.Ordering=1; VO.PlotOrder=1; VO.Distributions=0; 
-ModelOutput,SubjTrain,SubjTest=ebm.fit('./resources/ADNI_7.csv',MethodOptions=MO,VerboseOptions=VO)
+ModelOutput,SubjTrain,SubjTest=ebm.fit('./resources/Data_7.csv',MethodOptions=MO,VerboseOptions=VO)
 
 print([ModelOutput.BiomarkerList[x] for x in ModelOutput.MeanCentralOrdering])
 
@@ -49,7 +49,7 @@ MO.Bootstrap=0; MO.MixtureModel='vv2'; MO.PatientStaging=['ml','l']
 VO = namedtuple('VerboseOptions','Distributions PatientStaging')
 VO.PatientStaging=1; VO.Distributions=0; 
 import pandas as pd
-D=pd.read_csv('./resources/ADNI_7.csv')
+D=pd.read_csv('./resources/Data_7.csv')
 ModelOutput,SubjTrain,SubjTest=ebm.fit(D,MethodOptions=MO,VerboseOptions=VO)
 
 

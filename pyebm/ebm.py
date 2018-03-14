@@ -67,14 +67,21 @@ def fit(DataIn,MethodOptions=False,VerboseOptions=False,Factors=['Age','Sex','IC
         bs_ptid_AD_raw=resample(ptid_AD_raw,random_state=i);
         bs_data_CN_raw=resample(data_CN_raw,random_state=i);
         bs_ptid_CN_raw=resample(ptid_CN_raw,random_state=i);
-        bs_data_MCI_raw=resample(data_MCI_raw,random_state=i);
-        bs_ptid_MCI_raw=resample(ptid_MCI_raw,random_state=i);                        
-        bs_data_all=np.concatenate((bs_data_AD_raw,bs_data_CN_raw,bs_data_MCI_raw))  
-        bs_ptid_all=np.concatenate((bs_ptid_AD_raw,bs_ptid_CN_raw,bs_ptid_MCI_raw))  
+        if len(data_MCI_raw)>0:
+            bs_data_MCI_raw=resample(data_MCI_raw,random_state=i);
+            bs_ptid_MCI_raw=resample(ptid_MCI_raw,random_state=i);                        
+            bs_data_all=np.concatenate((bs_data_AD_raw,bs_data_CN_raw,bs_data_MCI_raw))  
+            bs_ptid_all=np.concatenate((bs_ptid_AD_raw,bs_ptid_CN_raw,bs_ptid_MCI_raw)) 
+        else:
+            bs_data_all=np.concatenate((bs_data_AD_raw,bs_data_CN_raw))  
+            bs_ptid_all=np.concatenate((bs_ptid_AD_raw,bs_ptid_CN_raw)) 
         labels_AD = np.zeros(len(bs_data_AD_raw))+3
         labels_CN = np.zeros(len(bs_data_CN_raw))+1
-        labels_MCI = np.zeros(len(bs_data_MCI_raw))+2
-        labels_all=np.concatenate((labels_AD,labels_CN,labels_MCI))
+        if len(data_MCI_raw)>0:
+            labels_MCI = np.zeros(len(bs_data_MCI_raw))+2
+            labels_all=np.concatenate((labels_AD,labels_CN,labels_MCI))
+        else:
+            labels_all=np.concatenate((labels_AD,labels_CN))
         if type(DVO.WriteBootstrapData)==str:
             str_out=DVO.WriteBootstrapData+'_'+str(i)+'.csv'
             Dbs=pd.DataFrame(bs_data_all[:,:,0],columns=BiomarkersList)
