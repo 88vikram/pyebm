@@ -59,7 +59,7 @@ VO.PatientStaging = 1;
 VO.Distributions = 0;
 import pandas as pd
 
-D = pd.read_csv('./resources/ADNI_7.csv')
+D = pd.read_csv('./resources/Data_7.csv')
 ModelOutput, SubjTrain, SubjTest = debm.fit(D, MethodOptions=MO, VerboseOptions=VO)
 
 from collections import namedtuple
