@@ -38,6 +38,7 @@ def fit(DataIn,MethodOptions=False,VerboseOptions=False,Factors=['Age','Sex','IC
     from pyebm import weighted_mallows as wma
     from pyebm import mixture_model as mm
     import numpy as np
+    import copy as cp
     from sklearn.utils import resample
     
     ## Data Preparation for DEBM
@@ -169,9 +170,16 @@ def fit(DataIn,MethodOptions=False,VerboseOptions=False,Factors=['Age','Sex','IC
         SubjTrainAll.append(SubjTrain)
     ## Get Mean Ordering of all the bootstrapped iterations.
     if len(data_AD_raw_list)>1:
-        wts=np.arange(num_events,0,-1)
-        wts_all=np.tile(wts,(len(data_AD_raw_list),1)).tolist()
-        (pi0_mean,bestscore,scores) = wma.weighted_mallows.consensus(num_events,pi0_all,wts_all,[]);   
+        event_centers_ordered = cp.deepcopy(event_centers_all)
+        for i in range(len(event_centers_all)):
+            count=-1
+            for x in pi0_all[i]:
+                count=count+1;
+                event_centers_ordered[i][x] = cp.deepcopy(event_centers_all[i][count])
+    
+        evn = np.asarray(event_centers_ordered)
+        evn_full = np.mean(evn,axis=0)
+        pi0_mean = list(np.argsort(evn_full))
     else:
         pi0_mean=pi0_all[0]
     

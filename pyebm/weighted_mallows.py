@@ -41,22 +41,13 @@ class weighted_mallows:
           pi0[:] = [int(x - 1) for x in pi0];
           event_centers = event_centers[:-1]
           return pi0,event_centers
-      
-    @classmethod
-    def unweightedkendall(h,pi,pi0):
-          return sum(weighted_mallows.__V(pi,pi0))     
+          
     # here D is assumed to be in inverse form (vertical bar form)
     # and represented as a dictionary indexed by tuples
     @classmethod
     def consensus(h,n,D,prob,pi0_init):
         maxSeqEvals = 10000
-        if len(pi0_init)==0:
-            Q,H,R = weighted_mallows.computeQ(n,D,prob)
-            Qns=numpy.sum(Q, axis = 0)
-            aQns=numpy.argsort(Qns)
-            sig0 = list(aQns);
-        else:
-            sig0=list(pi0_init);
+        sig0=list(pi0_init);
         bestscore = weighted_mallows.totalconsensus(sig0,D,prob)
         sig_list=(maxSeqEvals+n-1)*[0]; count = 0 ;
         sig_list[count]=sig0; 
@@ -76,22 +67,6 @@ class weighted_mallows:
                 break
         return sig0,bestscore,scores
             
-    @classmethod
-    def computeQ(h,n,D,prob):
-        Q = numpy.zeros((n,n))
-        R = numpy.zeros((n,n))  
-        H = numpy.zeros((1,n))  
-        for i in range(0,len(D)):
-            x = D[i];
-            for j in range(len(x)):    
-                H[0,x[j]] = H[0,x[j]] + 1;       
-                for l in range(j+1,len(x)):
-                    Q[x[j],x[l]] += prob[i][j] - prob[i][l];
-                    R[x[j],x[l]] += 1;   
-        for j in range(n):
-            for l in range(n):      
-                Q[j,l]=Q[j,l]/(H[0,j])       
-        return Q,H,R
 
     @classmethod
     def totalconsensus(h,pi0,D,prob):    
@@ -102,7 +77,6 @@ class weighted_mallows:
             pi0c=copy.copy(pi0);
             pi0c,p_new=weighted_mallows.__removeAbsentEvents(pi0c,s,p); # for NaN events and non-events
             score[i]= weighted_mallows.__kendall(pi0c,s,p);
-            #score[i]=weighted_mallows.__kendall_alt(pi0c,s,p);
         
         tscore=numpy.mean(score)
         return tscore
@@ -141,30 +115,6 @@ class weighted_mallows:
         return sum(weighted_distance)
   
     @classmethod
-    def __kendall_alt(h,pi0,pi,prob):
-        V = (len(pi)-1)*[0]
-        piidx = util.perminv(list(pi))
-        pi0idx=util.perminv(list(pi0))
-        for i in range(0,len(pi)-1):
-            for j in range(i+1,len(pi)):
-                m = (piidx[i] - piidx[j])*(pi0idx[i] - pi0idx[j])
-                if m<0:
-                    V[i] = V[i] + abs(prob[piidx[i]] - prob[piidx[j]])
-        return sum(V)
-  
-    @classmethod
-    def __kendall_alt_ind(h,pi0,pi,prob):
-        V = (len(pi)-1)*[0]
-        piidx = util.perminv(list(pi))
-        pi0idx=util.perminv(list(pi0))
-        for i in range(0,len(pi)-1):
-            for j in range(i+1,len(pi)):
-                m = (piidx[i] - piidx[j])*(pi0idx[i] - pi0idx[j])
-                if m<0:
-                    V[i] = V[i] + abs(prob[piidx[i]] - prob[piidx[j]])
-        return V
-  
-    @classmethod
     def __find(h,pi,val):
         n=len(pi);
         for i in range(0,n):
@@ -173,10 +123,3 @@ class weighted_mallows:
         return -1
     # pis here is assumed to be written in inverse notation
     # this is the insertion code (the interleaving at each stage of the mallows model)
-    @classmethod
-    def __V(h,pi,pi0):
-        V = (len(pi)-1)*[0]
-        piidx = util.perminv(list(pi))
-        for j in range(len(pi)-1):
-            V[j] = [piidx[item]<piidx[pi0[j]] for item in pi0[(j+1):]].count(True)
-        return V

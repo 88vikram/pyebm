@@ -28,12 +28,6 @@ def Prob2ListAndWeights(p_yes):
     
     return SubjectwiseOrdering,SubjectwiseWeights
 
-def perminv(sigma):
-	result = sigma[:];
-	for i in range(len(sigma)):
-		result[sigma[i]] = i;
-	return result;
-
 def adjswap(pi,i):
 	pic = pi[:]
 	(pic[i],pic[i+1])=(pic[i+1],pic[i])
