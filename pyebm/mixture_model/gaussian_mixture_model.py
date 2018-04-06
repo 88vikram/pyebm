@@ -14,12 +14,105 @@
 # *=========================================================================*/
 from __future__ import print_function
 
+import numpy as np
+from scipy.stats import multivariate_normal
+import scipy.optimize as opt
+import scipy.stats
+
+
+def GMM_Control(Data_all,Data_CN_pruned,Data_AD_pruned,params_nobias,type_opt=1,itvl=1.96,params_pruned=[]):
+
+    Nevents=len(Data_CN_pruned);
+    Nfeats=Data_CN_pruned[0].shape[1]
+    params = np.zeros((Nevents,5,Nfeats));                   
+    bnds_all=[]
+    for i in range(Nevents):
+        for j in range(Nfeats):
+            params[i,:,j]=params_nobias[i,:,j]; 
+
+    for i in range(Nevents):
+        Dalli=Data_all[:,i,:];
+        Dalli_valid_c = Dalli
+        bnds=np.zeros(((Nfeats*4)+1,2));
+        if type_opt==1:
+            bnds[-1,0]=0.01;
+            bnds[-1,1]=0.99;
+            Ncni = Data_CN_pruned[i].shape[0]
+            Nadi= Data_AD_pruned[i].shape[0]              
+            for j in range(Nfeats):
+                bnds[(j*4)+0,0] = params[i,0,j] - itvl*(params[i,1,j]/np.sqrt(Ncni))
+                bnds[(j*4)+0,1] = params[i,0,j] + itvl*(params[i,1,j]/np.sqrt(Ncni))
+                bnds[(j*4)+2,0] = params[i,2,j] - itvl*(params[i,3,j]/np.sqrt(Nadi))
+                bnds[(j*4)+2,1] = params[i,2,j] + itvl*(params[i,3,j]/np.sqrt(Nadi))
+                        
+                bnds[(j*4)+1,0] = params[i,1,j] - itvl*(params[i,1,j]/np.sqrt(Ncni-2))
+                bnds[(j*4)+1,1] = params[i,1,j] + itvl*(params[i,1,j]/np.sqrt(Ncni-2))
+                bnds[(j*4)+3,0] = params[i,3,j] - itvl*(params[i,3,j]/np.sqrt(Nadi-2))
+                bnds[(j*4)+3,1] = params[i,3,j] + itvl*(params[i,3,j]/np.sqrt(Nadi-2))
+        else:
+            bnds[-1,0]=params_nobias[i,4,0];
+            bnds[-1,1]=params_nobias[i,4,0];
+            if type_opt==2:
+                for j in range(Nfeats):
+                    bnds[(j*4)+0,0] = np.min([params[i,0,j],params[i,2,j]])
+                    bnds[(j*4)+0,1] = np.max([params[i,0,j],params[i,2,j]])
+                    bnds[(j*4)+2,0] = np.min([params[i,0,j],params[i,2,j]])
+                    bnds[(j*4)+2,1] = np.max([params[i,0,j],params[i,2,j]])
+                            
+                    bnds[(j*4)+1,0] = params[i,1,j]
+                    bnds[(j*4)+1,1] = params[i,1,j]*2
+                    bnds[(j*4)+3,0] = params[i,3,j]
+                    bnds[(j*4)+3,1] = params[i,3,j]*2
+            else:
+                for j in range(Nfeats):
+                    bnds[(j*4)+0,0] = np.min([params_pruned[i,0,j],params_pruned[i,2,j]])
+                    bnds[(j*4)+0,1] = np.max([params_pruned[i,0,j],params_pruned[i,2,j]])
+                    bnds[(j*4)+2,0] = np.min([params_pruned[i,0,j],params_pruned[i,2,j]])
+                    bnds[(j*4)+2,1] = np.max([params_pruned[i,0,j],params_pruned[i,2,j]])
+                            
+                    bnds[(j*4)+1,0] = params_pruned[i,1,j]
+                    bnds[(j*4)+1,1] = params_pruned[i,1,j]*2
+                    bnds[(j*4)+3,0] = params_pruned[i,3,j]
+                    bnds[(j*4)+3,1] = params_pruned[i,3,j]*2
+        bnds_all.append(bnds)
+        params[i,:,:]=GMM(Dalli_valid_c,Nfeats,params[i,:,:],bnds)
+    
+    return params,bnds_all
+
+def GMM(Data,Nfeats,params,bnds):
+
+        idx = bnds[:,1]-bnds[:,0]<=0.001
+        bnds[idx,1] = bnds[idx,0] + 0.001; # Upper bound should be greater 
+        tup_arg=(Data,0);
+        try:
+            p=np.zeros(((Nfeats*4)+1));
+            for j in range(Nfeats):
+                p[(j*4)+0]=params[0,j]
+                p[(j*4)+1]=params[1,j]
+                p[(j*4)+2]=params[2,j]
+                p[(j*4)+3]=params[3,j]
+            p[-1]=params[4,0]
+            if Nfeats==1:
+                res=opt.minimize(calculate_likelihood_gmm,p,args=(tup_arg),method='SLSQP', options={'disp': False,'maxiter': 600}, bounds=bnds)
+            else:
+                res=opt.minimize(calculate_likelihood_gmmN,p,args=(tup_arg),method='SLSQP', options={'disp': False,'maxiter': 600}, bounds=bnds)
+            if max(np.isnan(res.x))!=1: # In case of convergence to a nan value
+                p[:]=res.x[:]
+                for j in range(Nfeats):
+                    params[0,j]=p[(j*4)+0]
+                    params[1,j]=p[(j*4)+1]
+                    params[2,j]=p[(j*4)+2]
+                    params[3,j]=p[(j*4)+3]
+                params[4,:]=p[-1]
+                    
+        except ValueError:
+            print('Warning: Error in Gaussian Mixture Model')
+        return params
+
 def calculate_likelihood_gmm(param,data,dummy):
     # The dummy argument is a hack to overcome how single element tuple is handled 
     # differently in windows and linux. While it remains a single element tuple in windows,
     # in linux, the data type changes to that of the tuple element.
-    import scipy.stats
-    import numpy as np
     
     param_mix=param[4];
     norm_pre=scipy.stats.norm(loc=param[0], scale=param[1]);
@@ -35,8 +128,6 @@ def calculate_likelihood_gmm(param,data,dummy):
 
 def GMM_AY(Data_all,data_AD_raw,data_CN_raw):
     
-    import numpy as np
-    import scipy.optimize as opt
     Neve = data_AD_raw.shape[1]
     params = np.zeros((Neve,5,1));
     for i in range(Neve):
@@ -74,8 +165,6 @@ def calculate_likelihood_gmmN(param,data,dummy):
     # The dummy argument is a hack to overcome how single element tuple is handled 
     # differently in windows and linux. While it remains a single element tuple in windows,
     # in linux, the data type changes to that of the tuple element.
-    from scipy.stats import multivariate_normal
-    import numpy as np
     
     m=np.shape(data)
         
@@ -104,8 +193,6 @@ def calculate_likelihood_gmmN(param,data,dummy):
     
 def calculate_prob_mm(Data,params,val_invalid=0.5):
     # Works for single dimensional features
-    import numpy as np
-    import scipy.stats
     m=np.shape(Data);
     p_yes=np.zeros(m);
     likeli_pre_all=np.zeros(m);
@@ -135,8 +222,6 @@ def calculate_prob_mm(Data,params,val_invalid=0.5):
 
 def calculate_prob_mmN(Data,params,val_invalid=0.5):
     # Works for N dimensional features
-    import numpy as np
-    from scipy.stats import multivariate_normal
     
     m=np.shape(Data);
     Nfeats=m[2]

@@ -53,7 +53,7 @@ from collections import namedtuple
 MO = namedtuple('MethodOptions', 'MixtureModel Bootstrap PatientStaging')
 MO.Bootstrap = 0;
 MO.MixtureModel = 'vv2';
-MO.PatientStaging = ['exp', 'p']
+MO.PatientStaging = ['ml', 'l']
 VO = namedtuple('VerboseOptions', 'Distributions PatientStaging')
 VO.PatientStaging = 1;
 VO.Distributions = 0;
@@ -66,7 +66,7 @@ from collections import namedtuple
 
 MO = namedtuple('MethodOptions', 'MixtureModel Bootstrap PatientStaging')
 MO.Bootstrap = 0;
-MO.MixtureModel = 'vv1';
+MO.MixtureModel = 'vv2';
 MO.PatientStaging = ['exp', 'p']
 VO = namedtuple('VerboseOptions', 'Distributions PatientStaging')
 VO.PatientStaging = 1;
@@ -115,7 +115,7 @@ auc2 = [];
 count = -1
 for train_index, test_index in skf.split(D, pd.to_numeric(Y.values)):
     count = count + 1;
-    print([count])
+    print([count],end="")
     DTrain, DTest = D.iloc[train_index], D.iloc[test_index]
     ModelOutput1, SubjTrain1, SubjTest1 = debm.fit(DTrain, MethodOptions=MO1, VerboseOptions=VO, DataTest=DTest)
     ModelOutput2, SubjTrain2, SubjTest2 = ebm.fit(DTrain, MethodOptions=MO2, VerboseOptions=VO, DataTest=DTest)

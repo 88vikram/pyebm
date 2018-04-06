@@ -13,9 +13,14 @@
 # *
 # *=========================================================================*/
 
-from pyebm import util
+from pyebm.inputs_outputs import prepare_outputs as po
 import numpy 
 import copy
+
+def adjswap(pi,i):
+	pic = pi[:]
+	(pic[i],pic[i+1])=(pic[i+1],pic[i])
+	return pic; 
 
 class weighted_mallows:
     def __init__(self, phi, sigma0):
@@ -25,7 +30,7 @@ class weighted_mallows:
     @classmethod 
     def fitMallows(h,p_yes,params_opt):
           p_yes_padded = numpy.concatenate((numpy.zeros((p_yes.shape[0],1)),p_yes,numpy.ones((p_yes.shape[0],1))),axis=1)
-          so_list,weights_list = util.Prob2ListAndWeights(p_yes_padded);    
+          so_list,weights_list = po.Prob2ListAndWeights(p_yes_padded);    
           num_events = numpy.shape(params_opt)[0]
           pi0_init = 1+numpy.argsort(params_opt[:,4,0]);
           pi0_init=numpy.insert(pi0_init,0,num_events+1)
@@ -55,11 +60,11 @@ class weighted_mallows:
             scores = (n-1)*[0] 
             for i in range(n-1):
                 count=count+1;
-                sig = util.adjswap(sig0,i)
+                sig = adjswap(sig0,i)
                 sig_list[count]=sig
                 scores[i] = weighted_mallows.totalconsensus(sig,D,prob)
             bestidx = scores.index(min(scores))
-            bestsig = util.adjswap(sig0,bestidx)
+            bestsig = adjswap(sig0,bestidx)
             if bestscore > scores[bestidx]:
                 sig0 = bestsig[:]
                 bestscore = scores[bestidx] 
@@ -121,5 +126,6 @@ class weighted_mallows:
             if pi[i]==val:
                 return i                
         return -1
+          
     # pis here is assumed to be written in inverse notation
     # this is the insertion code (the interleaving at each stage of the mallows model)
