@@ -134,3 +134,70 @@ for train_index, test_index in skf.split(D, pd.to_numeric(Y.values)):
 
 print("\nMean AUC using DEBM with Patient Staging Option:", MO1.PatientStaging, '--->', np.mean(auc1))
 print("Mean AUC using EBM with Patient Staging Option:", MO2.PatientStaging, '--->', np.mean(auc2))
+
+
+## Computing Balanced Accuracy for DEBM
+D = pd.read_csv('./resources/Data_7.csv')
+from collections import namedtuple
+
+MO1 = namedtuple('MethodOptions', 'MixtureModel Bootstrap PatientStaging')
+MO1.Bootstrap = 0;
+MO1.MixtureModel = 'vv2';
+MO1.PatientStaging = ['exp', 'p']
+
+Y = D['Diagnosis'].copy();
+Y[Y == 'CN'] = 0;
+Y[Y == 'AD'] = 2;
+Y[Y == 'MCI'] = 1;
+
+from sklearn.model_selection import KFold as KF
+from sklearn import metrics
+import numpy as np
+
+skf = KF(n_splits=10, shuffle=True, random_state=42)
+print("Comparing the AUCs of CN / AD Classification:")
+print("Cross-Validation Iteration:")
+bacc_test = [];
+
+count = -1
+for train_index, test_index in skf.split(D, pd.to_numeric(Y.values)):
+    count = count + 1;
+    print([count],end="")
+    DTrain, DTest = D.iloc[train_index], D.iloc[test_index]
+    ModelOutput1, SubjTrain1, SubjTest1 = debm.fit(DTrain, MethodOptions=MO1, VerboseOptions=VO, DataTest=DTest)
+    
+    Y = DTest['Diagnosis']
+    idx = Y != 'MCI';
+    Y = Y[idx];
+    Y[Y == 'CN'] = 0;
+    Y[Y == 'AD'] = 1;
+
+    S = SubjTest1[0]['Stages'];
+    S = S.values[idx];
+    
+    Ytrain = DTrain['Diagnosis']
+    idx = Ytrain != 'MCI';
+    Ytrain = Ytrain[idx];
+    Ytrain[Ytrain == 'CN'] = 0;
+    Ytrain[Ytrain == 'AD'] = 1;
+    Strain = SubjTrain1[0]['Stages'];
+    Strain = Strain.values[idx];
+
+    fpr, tpr, thresholds = metrics.roc_curve(pd.to_numeric(Ytrain.values), Strain)
+    bacc=[]
+    for j in thresholds:
+        Ypred1 = np.zeros(Strain.shape)
+        Ypred1[Strain>=j]=1
+        cm1=metrics.confusion_matrix(pd.to_numeric(Ytrain.values),Ypred1)
+        sensitivity1 = cm1[0,0]/(cm1[0,0]+cm1[0,1])
+        specificity1 = cm1[1,1]/(cm1[1,0]+cm1[1,1])
+        bacc.append((sensitivity1+specificity1)/2)
+    thr_opt=thresholds[np.argmax(bacc)]
+    
+    Ypred_test=S>=thr_opt
+    cm2=metrics.confusion_matrix(pd.to_numeric(Y.values),Ypred_test)
+    sensitivity2 = cm2[0,0]/(cm2[0,0]+cm2[0,1])
+    specificity2 = cm2[1,1]/(cm2[1,0]+cm2[1,1])
+    bacc_test.append((sensitivity2+specificity2)/2)
+    
+print("\nMean Balanced Accuracy using DEBM with Patient Staging Option:", MO1.PatientStaging, '--->', np.mean(bacc_test))

@@ -118,7 +118,7 @@ def EventCenters(labels, pi0_mean, evn_full, evn):
     #ax.get_yaxis().set_visible(False)
     ax.set_xlim([0,1])
     ax.set_xticks(np.arange(0,1.,0.1))
-    ax.set_xticklabels(np.arange(0,1.,0.1))
+    #ax.set_xticklabels(np.arange(0,1.,0.1))
     ax.grid(b=True, axis='x', color='k', linestyle='--',alpha=0.5,which='major')
     ax.set_xlabel('Disease Stage')
     ax.set_ylim([-0.5,0.5+len(labels)-1])
