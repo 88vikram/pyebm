@@ -166,6 +166,9 @@ def find_central_ordering(Data_all,p_yes,params_opt,Groups,GroupValues,DMO,algo_
             params_opt[:,4,0]=mix
     else:
         gval=np.unique(GroupValues[0])
+        idx_valid=~np.isnan(gval)
+        gval=gval[idx_valid]
+        
         event_centers=[]; pi0=[];
         for g in gval:
             idx=GroupValues[0]==g
@@ -194,6 +197,8 @@ def do_patient_staging(pi0,event_centers,DMO,p_yes,p_no,likeli_post,likeli_pre,G
             subj_stages=patient_staging(pi0,event_centers,Y,N,DMO.PatientStaging);
         else:
             gval=np.unique(GroupValues[0])
+            idx_valid=~np.isnan(gval)
+            gval=gval[idx_valid]
             subj_stages=np.zeros(Y.shape[0]); count_gr=-1;
             for g in gval:
                 count_gr = count_gr+1;
@@ -223,7 +228,8 @@ def compile_model_output(BiomarkersList,pi0_mean,pi0_all,event_centers_all,param
 def get_mean_ordering(pi0_all,event_centers_all, data_AD_raw_list, Groups,GroupValues):
     event_centers_ordered = cp.deepcopy(event_centers_all)
     gval=np.unique(GroupValues[0])
-    
+    idx_valid=~np.isnan(gval)
+    gval=gval[idx_valid]    
     if len(Groups)==0:
         for i in range(len(event_centers_all)):
             count=-1
@@ -266,6 +272,8 @@ def show_outputs(Data_all, Data_test_all, pdData_all, Labels, pdDataTest_all, su
                 visualize.EventCenters(BiomarkersList,pi0_mean, evn_full, evn);
         else:
             gval=np.unique(GroupValues[0])
+            idx_valid=~np.isnan(gval)
+            gval=gval[idx_valid]
             for g in range(len(gval)):
                 sys.stdout.flush()
                 print(Groups[0],'=',gval[g])

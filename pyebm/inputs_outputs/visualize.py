@@ -139,8 +139,18 @@ def Staging(subj_stages,Diagnosis,Labels):
     maxfreq=np.max(freq)
     
     idx_cn = np.where(Diagnosis==1); idx_cn = idx_cn[0]
-    idx_ad = np.where(Diagnosis==len(Labels)); idx_ad = idx_ad[0]
-    idx_mci = np.where(np.logical_and(Diagnosis > 1, Diagnosis < len(Labels))); idx_mci = idx_mci[0]
+    idx_ad = np.where(Diagnosis==np.max(Diagnosis)); idx_ad = idx_ad[0]
+    idx_mci = np.where(np.logical_and(Diagnosis > 1, Diagnosis < np.max(Diagnosis))); idx_mci = idx_mci[0]
+    
+    if len(Labels)>np.max(Diagnosis):
+        strc = '';
+        for j in range(1, len(Labels)-1):
+            strc = strc+Labels[j]+','
+        for j in range(1, len(Labels)-1):
+            del Labels[1]
+        strc = strc[:-1]
+        Labels.insert(1,strc)
+        
     
     fig, ax = plt.subplots(figsize=(12, 6))
     plt.style.use('seaborn-whitegrid')
@@ -150,7 +160,8 @@ def Staging(subj_stages,Diagnosis,Labels):
     count=-1;
     freq_all=[]
     for idx in [idx_cn,idx_mci,idx_ad]:
-        count=count+1;
+        if len(idx)>0:
+            count=count+1;
         freq,binc=np.histogram(subj_stages[idx],bins=binc)
         freq = (1.*freq)/len(subj_stages)
         if count>0:
@@ -162,10 +173,10 @@ def Staging(subj_stages,Diagnosis,Labels):
     ax.set_ylim([0,maxfreq])
     if np.max(subj_stages)<1:
         ax.set_xticks(np.arange(0,1.05,0.1))
-        ax.set_xticklabels(np.arange(0,1.05,0.1),fontsize=14)
+        #ax.set_xticklabels(np.arange(0,1.05,0.1),fontsize=14)
     else:
         ax.set_xticks(np.arange(0,np.max(subj_stages)+0.05,1))
-        ax.set_xticklabels(np.arange(0,np.max(subj_stages)+0.05,1),fontsize=14)
+        #ax.set_xticklabels(np.arange(0,np.max(subj_stages)+0.05,1),fontsize=14)
         
     ax.set_yticks(np.arange(0,maxfreq,0.1))
     ax.set_yticklabels(np.arange(0,maxfreq,0.1),fontsize=14)
