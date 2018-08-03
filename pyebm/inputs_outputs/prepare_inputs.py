@@ -81,7 +81,8 @@ def CorrectConfounders(DataTrain,DataTest,Factors=['Age','Sex','ICV'],flag_corre
                 idx_female=Data['Sex'] == 'Female'; idx_female=np.where(idx_female); idx_female = idx_female[0];
                 sex[idx_male]=1; sex[idx_female]=0;
                 Data=Data.drop('Sex',axis=1)
-                Data=Data.assign(Sex=pd.Series(sex))
+                Data=Data.assign(Sex=pd.Series(sex,Data.index))
+                
                 if count==0:
                     DataTrain = Data.copy()
                 else:
@@ -91,6 +92,7 @@ def CorrectConfounders(DataTrain,DataTest,Factors=['Age','Sex','ICV'],flag_corre
         count=-1;
         for Data in [DataTrain,DataTest]:
             count=count+1;
+            idx = Data['Diagnosis']==1
             DataBiomarkers=Data
             DataBiomarkers=DataBiomarkers.drop(Factors,axis=1)
             H = list(DataBiomarkers)
@@ -123,7 +125,7 @@ def CorrectConfounders(DataTrain,DataTest,Factors=['Age','Sex','ICV'],flag_corre
                 betalist=[]
                 for i in range(len(BiomarkersList)):
                     str_formula = BiomarkersListnew[i] + '~' + str_confounders
-                    result = sm.ols(formula=str_formula, data=Data).fit()
+                    result = sm.ols(formula=str_formula, data=Data[idx]).fit()
                     betalist.append(result.params)
             
             ## Correction for the confounding factors

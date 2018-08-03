@@ -158,28 +158,38 @@ def Staging(subj_stages,Diagnosis,Labels):
     rc('mathtext', fontset='stixsans');
     c = ['#4daf4a','#377eb8','#e41a1c']
     count=-1;
-    freq_all=[]
-    for idx in [idx_cn,idx_mci,idx_ad]:
-        if len(idx)>0:
-            count=count+1;
-        freq,binc=np.histogram(subj_stages[idx],bins=binc)
-        freq = (1.*freq)/len(subj_stages)
-        if count>0:
-            freq=freq+freq_all[count-1]
-        freq_all.append(freq)
-        bw=1/(2.*nb)
-        ax.bar(binc[:-1],freq,width=bw,color=c[count],label=Labels[count],zorder=3-count)
-    ax.set_xlim([-bw,bw+np.max([1,np.max(subj_stages)])])
-    ax.set_ylim([0,maxfreq])
+    freq_all=[]; maxfreq_ml = 0;
+    if np.max(subj_stages)>1:
+        for idx in [idx_cn,idx_mci,idx_ad]:
+            if len(idx)>0:
+                count=count+1;
+            freq,binc=np.histogram(subj_stages[idx],bins=binc)
+            freq = (1.*freq)/len(subj_stages)
+            maxfreq_ml = np.max([np.max(freq),maxfreq_ml])
+            bw=2/(nb)
+            ax.bar(binc[:-1]+count*bw,freq,width=bw,color=c[count],label=Labels[count],zorder=3-count)
+        ax.set_xlim([-bw,(count+1)*bw+np.max([1,np.max(subj_stages)])])
+        ax.set_ylim([0,maxfreq_ml])
+    else:
+        for idx in [idx_cn,idx_mci,idx_ad]:
+            if len(idx)>0:
+                count=count+1;
+            freq,binc=np.histogram(subj_stages[idx],bins=binc)
+            freq = (1.*freq)/len(subj_stages)
+            if count>0:
+                freq=freq+freq_all[count-1]
+            freq_all.append(freq)
+            bw=1/(2.*nb)
+            ax.bar(binc[:-1],freq,width=bw,color=c[count],label=Labels[count],zorder=3-count)
+        ax.set_xlim([-bw,bw+np.max([1,np.max(subj_stages)])])
+        ax.set_ylim([0,maxfreq])
     if np.max(subj_stages)<1:
         ax.set_xticks(np.arange(0,1.05,0.1))
-        #ax.set_xticklabels(np.arange(0,1.05,0.1),fontsize=14)
     else:
         ax.set_xticks(np.arange(0,np.max(subj_stages)+0.05,1))
-        #ax.set_xticklabels(np.arange(0,np.max(subj_stages)+0.05,1),fontsize=14)
         
     ax.set_yticks(np.arange(0,maxfreq,0.1))
-    ax.set_yticklabels(np.arange(0,maxfreq,0.1),fontsize=14)
+    ax.tick_params(labelsize=14)
     ax.set_xlabel('Estimated Disease Stage',fontsize=16)
     ax.set_ylabel('Frequency of occurrences',fontsize=16)
     ax.legend(fontsize=16)

@@ -17,7 +17,12 @@ from pyebm.mixture_model import do_classification as dc
 from pyebm import core_utilities as cu
 import numpy as np
 
-def fit(DataIn,MethodOptions=False,VerboseOptions=False,Factors=['Age','Sex','ICV'],Labels=['CN','MCI','AD'],DataTest=[],Groups=[]):
+def fit(DataIn,MethodOptions=False,VerboseOptions=False,Factors=None,Labels = None,DataTest=[],Groups=[]):
+    
+    if Factors == None:
+        Factors = ['Age','Sex','ICV']
+    if Labels == None:
+        Labels=['CN','MCI','AD']
     
     data_CN_raw,data_MCI_raw,data_AD_raw,ptid_CN_raw,ptid_MCI_raw,ptid_AD_raw,Data_all,pdData_all, \
                     Data_test_all,pdDataTest_all,GroupValues_cn,GroupValues_ad,GroupValues_mci,GroupValues_test,BiomarkersList, DMO, DVO=cu.parse_inputs(DataIn,\
