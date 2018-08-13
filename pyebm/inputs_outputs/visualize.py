@@ -57,7 +57,7 @@ def BiomarkerDistribution(Data_all,params_all,BiomarkersList):
                 if max_scaling>1:
                     scale_range=np.arange(1,max_scaling+1,max_scaling/1000.)
                 else:
-                    scale_range=np.arange(1,(1/max_scaling)+1,max_scaling/1000.)
+                    scale_range=np.arange(1,(10/max_scaling)+1,max_scaling/1000.)
                     scale_range=np.reciprocal(scale_range)
                 
                 for s in scale_range:
