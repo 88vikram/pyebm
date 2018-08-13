@@ -84,7 +84,7 @@ Each dataframe consists of the the following fields:
 
 [3] Young, A.L., et. al.: ‘[A data-driven model of biomarker changes in sporadic Alzheimer’s disease](https://doi.org/10.1093/brain/awu176)’, Brain 137(9), 2564–2577 (2014).
 
-[4] Venkatraghavan V., et. al., ‘A Discriminative Event Based Model for Alzheimer's Disease Progression Modeling’, Manuscript under preparation.
+[4] Venkatraghavan V., et. al., ‘[Disease Progression Timeline Estimation for Alzheimer's Disease using Discriminative Event Based Modeling](https://arxiv.org/abs/1808.03604)’, Manuscript Submitted.
 
 ### Contact:
 
