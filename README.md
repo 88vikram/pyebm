@@ -1,9 +1,9 @@
 # pyebm - A toolbox for Event Based Models
 
-The event-based model (EBM) for data-driven disease progression modeling estimates the sequence in which biomarkers for a disease become abnormal. This helps in understanding the dynamics of disease progression and facilitates early diagnosis by staging patients on a disease progression timeline. A more accurate and scalable EBM algorithm (Discriminative EBM) was introduced in [2]. 
+The event-based model (EBM) for data-driven disease progression modeling estimates the sequence in which biomarkers for a disease become abnormal. This helps in understanding the dynamics of disease progression and facilitates early diagnosis by staging patients on a disease progression timeline. A more accurate and scalable EBM algorithm (Discriminative EBM) was introduced in [2,4]. 
 
 Call ebm.fit to find the central ordering in a few biomarkers using method [1]
-Call debm.fit to find the central ordering in a few biomarkers using method [2]
+Call debm.fit to find the central ordering in a few biomarkers using method [2,4]
 
 EBM and its variants typically consists of 2 steps. 
 
@@ -18,7 +18,7 @@ This toolbox supports 3 different Gaussian mixture models.
 
 ## Required Libraries
 
-Python 2.7 / 3.4, numpy 1.13, pandas 0.20, sklearn 0.19, scipy 0.18, seaborn 0.8, statsmodels 0.8
+Python 3.5, numpy 1.16, pandas 0.24, sklearn 0.20, scipy 1.2, seaborn 0.9, statsmodels 0.9
 
 ## Explanation of Inputs:
 
@@ -84,7 +84,7 @@ Each dataframe consists of the the following fields:
 
 [3] Young, A.L., et. al.: ‘[A data-driven model of biomarker changes in sporadic Alzheimer’s disease](https://doi.org/10.1093/brain/awu176)’, Brain 137(9), 2564–2577 (2014).
 
-[4] Venkatraghavan V., et. al., ‘[Disease Progression Timeline Estimation for Alzheimer's Disease using Discriminative Event Based Modeling](https://arxiv.org/abs/1808.03604)’, Manuscript Submitted.
+[4] Venkatraghavan V., et. al., ‘[Disease Progression Timeline Estimation for Alzheimer's Disease using Discriminative Event Based Modeling](https://doi.org/10.1016/j.neuroimage.2018.11.024)’, NeuroImage 186, 518 - 532 (2019).
 
 ### Contact:
 
