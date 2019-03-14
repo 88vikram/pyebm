@@ -33,10 +33,10 @@ def parse_inputs(DataIn,MethodOptions,VerboseOptions,Factors,Labels,DataTest,Gro
     
     if algo_type=='debm':
         DMO = namedtuple('DefaultMethodOptions','MixtureModel Bootstrap PatientStaging')
-        DMO.JointFit = 0; DMO.MixtureModel='vv2'; DMO.Bootstrap=0; DMO.PatientStaging=['exp','p'];
+        DMO.JointFit = 0; DMO.MixtureModel='GMMvv2'; DMO.Bootstrap=0; DMO.PatientStaging=['exp','p'];
     elif algo_type=='ebm':
         DMO = namedtuple('DefaultMethodOptions',' MixtureModel Bootstrap PatientStaging NStartpoints Niterations N_MCMC')
-        DMO.JointFit=0; DMO.MixtureModel='vv2'; DMO.Bootstrap=0; DMO.PatientStaging=['exp','p']; 
+        DMO.JointFit=0; DMO.MixtureModel='GMMvv2'; DMO.Bootstrap=0; DMO.PatientStaging=['exp','p']; 
         DMO.NStartpoints=10; DMO.Niterations=1000; DMO.N_MCMC=10000;
     DVO = namedtuple('DefaultVerboseOptions','Distributions Ordering PlotOrder WriteBootstrapData PatientStaging')
     DVO.Distributions = 0; DVO.Ordering=0; DVO.PlotOrder=0; DVO.WriteBootstrapData=0; DVO.PatientStaging = 0
@@ -135,52 +135,77 @@ def bootstrap_data_prep(data_CN_raw,data_MCI_raw,data_AD_raw,ptid_CN_raw,ptid_MC
         GroupValues_list.append(bs_GroupValues)
     return data_CN_raw_list,data_AD_raw_list,data_all_list,ptid_all_list,GroupValues_list
     
-def do_mixturemodel(DMO,data_AD_raw,data_CN_raw,Data_all):
+def do_mixturemodel(DMO,data_AD_raw,data_CN_raw,Data_all,Groups,GroupValues):
     
-        Data_AD_pruned,Data_CN_pruned,params_raw,params_pruned=dc.Reject(data_AD_raw,data_CN_raw);
-        ## Bias Correction to get an unbiased estimate                                                        
-        if DMO.MixtureModel=='vv2':
-            params_opt = params_pruned
-            mixes_old=params_opt[:,4,0]; flag_stop = 0;
-            while flag_stop==0:
-                params_optmix,bnds_all = gmm.GMM_Control(Data_all,Data_CN_pruned,Data_AD_pruned,params_opt,itvl=0.001);
-                params_opt,bnds_all=gmm.GMM_Control(Data_all,Data_CN_pruned,Data_AD_pruned,params_optmix,type_opt=3,params_pruned=params_pruned);
-                mixes = params_opt[:,4,0]
-                if np.mean(np.abs(mixes-mixes_old))<10**-2:
-                    flag_stop=1;
-                mixes_old = np.copy(mixes)
-        elif DMO.MixtureModel=='vv1':
-            params_opt,bnds_all = gmm.GMM_Control(Data_all,Data_CN_pruned,Data_AD_pruned,params_pruned,type_opt=1);
-        elif DMO.MixtureModel=='ay':
-            params_opt=gmm.GMM_AY(Data_all,data_AD_raw,data_CN_raw)
-        return params_opt
+        BiomarkerParams = namedtuple('BiomarkerParams','Control Disease Mixing')
+        if DMO.MixtureModel[:3]=='GMM':
+            Data_AD_pruned,Data_CN_pruned,params_raw,params_pruned=dc.Reject(data_AD_raw,data_CN_raw);
+            Ncni = []; Nadi = []
+            for i in range(Data_all.shape[1]):
+                Ncni.append(Data_CN_pruned[i].shape[0])
+                Nadi.append(Data_AD_pruned[i].shape[0])
+            ## Bias Correction to get an unbiased estimate                                      
+            if DMO.MixtureModel=='GMMvv2':
+                params_opt = params_pruned
+                mixes_old=params_opt[:,4,0]; flag_stop = 0;
+                while flag_stop==0:
+                    params_optmix,bnds_all = gmm.GMM_Control(Data_all,Ncni,Nadi,params_opt,itvl=0.00001);
+                    params_opt,bnds_all=gmm.GMM_Control(Data_all,Ncni,Nadi,params_optmix,type_opt=3,params_pruned=params_pruned);
+                    mixes = params_opt[:,4,0]
+                    if np.mean(np.abs(mixes-mixes_old))<10**-2:
+                        flag_stop=1;
+                    mixes_old = np.copy(mixes)
+            elif DMO.MixtureModel=='GMMvv1':
+                params_opt,bnds_all = gmm.GMM_Control(Data_all,Data_CN_pruned,Data_AD_pruned,params_pruned,type_opt=1);
+            elif DMO.MixtureModel=='GMMay':
+                params_opt=gmm.GMM_AY(Data_all,data_AD_raw,data_CN_raw)
+            if len(Groups)==0:  
+                BiomarkerParams.Mixing = params_opt[:,4,0]
+            else:
+                BiomarkerParams.Mixing = []
+                gval=np.unique(GroupValues[0])
+                idx_valid=~np.isnan(gval)
+                gval=gval[idx_valid]
+                for g in gval:
+                    idx=GroupValues[0]==g
+                    params_grp,bnds_all = gmm.GMM_Control(Data_all[idx,:],Data_CN_pruned,Data_AD_pruned,params_opt,itvl=0.001);
+                    BiomarkerParams.Mixing.append( params_grp[:,4,0] )
+            if params_opt.shape[2]==1:
+                BiomarkerParams.Control = params_opt[:,0:2,0]
+                BiomarkerParams.Disease = params_opt[:,2:4,0]
+            else:
+                BiomarkerParams.Control = params_opt[:,0:2,:]
+                BiomarkerParams.Disease = params_opt[:,2:4,:]
+            p_yes,p_no,likeli_post,likeli_pre=dc.Classify(Data_all,BiomarkerParams,DMO,Groups,GroupValues); 
+        return BiomarkerParams,p_yes,p_no,likeli_post,likeli_pre
             
-def find_central_ordering(Data_all,p_yes,params_opt,Groups,GroupValues,DMO,algo_type):
+def find_central_ordering(Data_all,p_yes,BiomarkerParams,Groups,GroupValues,DMO,algo_type):
     if len(Groups)==0:     
         if algo_type == 'debm':                                           
-            pi0,event_centers = gm.weighted_mallows.fitMallows(p_yes,params_opt);
+            pi0,event_centers = gm.weighted_mallows.fitMallows(p_yes,BiomarkerParams.Mixing);
         elif algo_type == 'ebm': 
-            mix = np.copy(params_opt[:,4,0]);
-            params_opt[:,4,0]=0.5;
-            pi0,event_centers=dl.MCMC(Data_all[:,:,0],params_opt,DMO.N_MCMC,params_opt[:,4,0],DMO.NStartpoints,DMO.Niterations);    
-            params_opt[:,4,0]=mix
+            mix = np.copy(BiomarkerParams.Mixing);
+            BiomarkerParams.Mixing=0.5+np.zeros(len(mix));
+            pi0,event_centers=dl.MCMC(Data_all[:,:,0],BiomarkerParams,DMO);    
+            BiomarkerParams.Mixing=mix
     else:
         gval=np.unique(GroupValues[0])
         idx_valid=~np.isnan(gval)
         gval=gval[idx_valid]
         
-        event_centers=[]; pi0=[];
+        event_centers=[]; pi0=[]; count_gr=-1
         for g in gval:
             idx=GroupValues[0]==g
             pygr=p_yes[idx,:]
             Dgr = Data_all[idx,:,0]
+            count_gr = count_gr+1
             if algo_type == 'debm':
-                pi0_gr,ecgr = gm.weighted_mallows.fitMallows(pygr,params_opt);
+                pi0_gr,ecgr = gm.weighted_mallows.fitMallows(pygr,BiomarkerParams.Mixing[count_gr]);
             elif algo_type == 'ebm': 
-                mix = np.copy(params_opt[:,4,0]);
-                params_opt[:,4,0]=0.5;
-                pi0_gr,ecgr=dl.MCMC(Dgr,params_opt,DMO.N_MCMC,params_opt[:,4,0],DMO.NStartpoints,DMO.Niterations);    
-                params_opt[:,4,0]=mix
+                mix = np.copy(BiomarkerParams.Mixing[count_gr]);
+                BiomarkerParams.Mixing[count_gr]=0.5+np.zeros(len(mix));
+                pi0_gr,ecgr=dl.MCMC(Dgr,BiomarkerParams,DMO);    
+                BiomarkerParams.Mixing[count_gr]=mix
             pi0.append(pi0_gr)
             event_centers.append(ecgr)
     return pi0,event_centers
@@ -262,8 +287,8 @@ def get_mean_ordering(pi0_all,event_centers_all, data_AD_raw_list, Groups,GroupV
             
     return pi0_mean, evn, evn_full
     
-def show_outputs(Data_all, Data_test_all, pdData_all, Labels, pdDataTest_all, subj_stages, subj_stages_test, params_opt,\
-                 evn_full, evn, BiomarkersList,pi0_all,pi0_mean,DVO,Groups,GroupValues,algo_type):
+def show_outputs(Data_all, Data_test_all, pdData_all, Labels, pdDataTest_all, subj_stages, subj_stages_test, BiomarkerParams,\
+                 evn_full, evn, BiomarkersList,pi0_all,pi0_mean,DMO,DVO,Groups,GroupValues,algo_type):
         ## Visualize Results
     if DVO.Ordering==1:
         if len(Groups)==0:
@@ -285,8 +310,24 @@ def show_outputs(Data_all, Data_test_all, pdData_all, Labels, pdDataTest_all, su
                     visualize.EventCenters(BiomarkersList,pi0_mean[g], evn_full[g,:], evn[:,g,:]);
                 
     if DVO.Distributions==1:
-        params_all=[params_opt];
-        visualize.BiomarkerDistribution(Data_all,params_all,BiomarkersList);
+        if len(Groups)==0:
+            params_all=[BiomarkerParams];
+            visualize.BiomarkerDistribution(Data_all,params_all,BiomarkersList);
+        else:
+            BiomarkerParamsGr = namedtuple('BiomarkerParams','Control Disease Mixing')
+            BiomarkerParamsGr.Control = BiomarkerParams.Control
+            BiomarkerParamsGr.Disease = BiomarkerParams.Disease
+            gval=np.unique(GroupValues[0])
+            idx_valid=~np.isnan(gval)
+            gval=gval[idx_valid]
+            countgr = -1;
+            for g in range(len(gval)):
+                idxgr=GroupValues[0]==g
+                countgr = countgr + 1
+                BiomarkerParamsGr.Mixing = BiomarkerParams.Mixing[countgr]
+                params_all=[BiomarkerParamsGr];
+                visualize.BiomarkerDistribution(Data_all[idxgr,:,:],params_all,BiomarkersList);
+            
     if DVO.PatientStaging==1:
         print ('Estimated patient stages of subjects in training set')
         visualize.Staging(subj_stages,pdData_all['Diagnosis'],Labels)
@@ -309,12 +350,17 @@ def patient_staging(pi0,event_centers,likeli_post,likeli_pre,type_staging):
     p_no_perm = L_no[:,pi0];
     p_yes_perm = L_yes[:,pi0];
     for j in range(m[1]+1):
-        prob_stage[:,j]=pk_s[j]*np.multiply(np.prod(p_yes_perm[:,:j],axis=1),np.prod(p_no_perm[:,j:],axis=1))
+        prob_stage[:,j]=pk_s[j]*np.multiply(np.nanprod(p_yes_perm[:,:j],axis=1),np.nanprod(p_no_perm[:,j:],axis=1))
 
     all_stages_rep2=matlib.repmat(event_centers_pad[:-1],m[0],1)
     
     if type_staging[0]=='exp':
-        subj_stages=np.divide(np.mean(np.multiply(all_stages_rep2,prob_stage),axis=1),np.mean(prob_stage,axis=1)+1e-100)
+        subj_stages = np.zeros(prob_stage.shape[0])
+        for i in range(prob_stage.shape[0]):
+            idx_nan=np.isnan(p_yes_perm[i,:])
+            pr=prob_stage[i,1:]
+            ev = event_centers_pad[1:-1]
+            subj_stages[i]=np.mean(np.multiply(np.append(prob_stage[i,0],pr[~idx_nan]),np.append(event_centers_pad[0],ev[~idx_nan])))/np.mean(np.append(prob_stage[i,0],pr[~idx_nan]))
     elif type_staging[0]=='ml':
         subj_stages=np.argmax(prob_stage,axis=1)
     

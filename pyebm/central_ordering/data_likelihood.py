@@ -20,11 +20,19 @@ import copy
 import random
 
 from pyebm.mixture_model import gaussian_mixture_model as gmm
+from pyebm.mixture_model import do_classification as dc 
 
-def adhoc(Data,params,n_startpoints,n_iterations,mix):
+def adhoc(Data,params,n_startpoints,n_iterations,mix,DMO):
+    
 
-    m1=np.shape(Data)[1];           
-    p_yes,p_no,likeli_pre_all,likeli_post_all=gmm.calculate_prob_mm(Data,params);
+    m1=np.shape(Data)[1];
+    if DMO.MixtureModel[:3]=='GMM':
+        params_opt = np.zeros((len(params.Mixing),5,1))
+        params_opt[:,:2,0] = params.Control
+        params_opt[:,2:4,0] = params.Disease
+        params_opt[:,4,0] = params.Mixing
+        p_yes,p_no,likeli_pre_all,likeli_post_all=gmm.calculate_prob_mm(Data,params_opt);
+        
     ml_ordering_mat = np.zeros((n_startpoints,m1));
     samples_likelihood_mat = np.zeros(n_startpoints);
 
@@ -64,12 +72,21 @@ def adhoc(Data,params,n_startpoints,n_iterations,mix):
     ml_ordering = ml_ordering_mat[max_like_ix,:]
     return ml_ordering,obj_fn,samples_likelihood_mat
     
-def MCMC(Data,params,n_mcmciterations,mix,n_startpoints,n_iterations):
-
-    m1=np.shape(Data)[1];
-    p_yes,p_no,likeli_pre_all,likeli_post_all=gmm.calculate_prob_mm(Data,params);
+def MCMC(Data,params,DMO):
     
-    seq_init,obj_fn,samples_likelihood_mat=adhoc(Data,params,n_startpoints,n_iterations,mix);
+    n_mcmciterations = DMO.N_MCMC
+    n_startpoints = DMO.NStartpoints
+    n_iterations = DMO.Niterations
+    mix = params.Mixing
+    m1=np.shape(Data)[1];
+    if DMO.MixtureModel[:3]=='GMM':                    
+        params_opt = np.zeros((len(params.Mixing),5,1))
+        params_opt[:,:2,0] = params.Control
+        params_opt[:,2:4,0] = params.Disease
+        params_opt[:,4,0] = params.Mixing
+        p_yes,p_no,likeli_pre_all,likeli_post_all=gmm.calculate_prob_mm(Data,params_opt);
+    
+    seq_init,obj_fn,samples_likelihood_mat=adhoc(Data,params,n_startpoints,n_iterations,mix,DMO);
     this_samples_ordering = np.zeros((n_mcmciterations,m1));
     this_samples_likelihood = np.zeros((n_mcmciterations,1));
     this_samples_ordering[0,:]=copy.copy(seq_init);

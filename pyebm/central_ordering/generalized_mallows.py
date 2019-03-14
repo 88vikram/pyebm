@@ -28,11 +28,11 @@ class weighted_mallows:
         self.sigma0 = sigma0[:]
 
     @classmethod 
-    def fitMallows(h,p_yes,params_opt):
+    def fitMallows(h,p_yes,mixing_params):
           p_yes_padded = numpy.concatenate((numpy.zeros((p_yes.shape[0],1)),p_yes,numpy.ones((p_yes.shape[0],1))),axis=1)
           so_list,weights_list = po.Prob2ListAndWeights(p_yes_padded);    
-          num_events = numpy.shape(params_opt)[0]
-          pi0_init = 1+numpy.argsort(params_opt[:,4,0]);
+          num_events = len(mixing_params)
+          pi0_init = 1+numpy.argsort(mixing_params);
           pi0_init=numpy.insert(pi0_init,0,num_events+1)
           pi0_init=numpy.append(pi0_init,0)
           pi0,bestscore,scores = weighted_mallows.consensus(num_events+2,so_list,weights_list,pi0_init)

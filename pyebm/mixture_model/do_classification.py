@@ -68,12 +68,47 @@ def Reject(data_AD,data_CN):
 
     return Data_AD,Data_CN,params_raw,params_pruned
     
-def Classify(Data4Classification,params):
-  
-    Nfeats=Data4Classification.shape[2]
-    if Nfeats==1:
-        p_yes,p_no,likeli_pre,likeli_post=calculate_prob_mm(Data4Classification[:,:,0],params,val_invalid=np.nan);
-    else:
-        p_yes,p_no,likeli_pre,likeli_post=calculate_prob_mmN(Data4Classification,params,val_invalid=np.nan);
-
+def Classify(Data4Classification,BiomarkerParams,DMO,Groups = None ,GroupValues = None):
+    if Groups == None:
+        Groups = []
+        
+    if DMO.MixtureModel[:3]=='GMM':
+         Nfeats=Data4Classification.shape[2]
+         
+         if Nfeats==1:
+             params = np.zeros((Data4Classification.shape[1],5))
+             params[:,:2] = BiomarkerParams.Control
+             params[:,2:4] = BiomarkerParams.Disease
+         else:
+             params = np.zeros((Data4Classification.shape[1],5,Nfeats))
+             params[:,:2,:] = BiomarkerParams.Control
+             params[:,2:4,:] = BiomarkerParams.Disease
+         if len(Groups)==0:
+            if Nfeats==1:
+                params[:,4] = BiomarkerParams.Mixing
+                p_yes,p_no,likeli_pre,likeli_post=calculate_prob_mm(Data4Classification[:,:,0],params,val_invalid=np.nan);
+            else:
+                params[:,4,0] = BiomarkerParams.Mixing
+                p_yes,p_no,likeli_pre,likeli_post=calculate_prob_mmN(Data4Classification,params,val_invalid=np.nan);
+         else:
+            p_yes = np.zeros((Data4Classification.shape[0],Data4Classification.shape[1]))
+            p_no = np.zeros((Data4Classification.shape[0],Data4Classification.shape[1]))
+            likeli_post = np.zeros((Data4Classification.shape[0],Data4Classification.shape[1]))
+            likeli_pre = np.zeros((Data4Classification.shape[0],Data4Classification.shape[1]))
+            gval=np.unique(GroupValues[0])
+            idx_valid=~np.isnan(gval)
+            gval=gval[idx_valid]
+            count=-1
+            for g in gval:
+                count=count+1
+                idx=GroupValues[0]==g
+                params[:,4,0] = BiomarkerParams.Mixing[count]
+                if Nfeats==1:
+                    p_yes_gr,p_no_gr,likeli_pre_gr,likeli_post_gr=calculate_prob_mm(Data4Classification[idx,:,0],params,val_invalid=np.nan);
+                else:
+                    p_yes_gr,p_no_gr,likeli_pre_gr,likeli_post_gr=calculate_prob_mmN(Data4Classification[idx,:,:],params,val_invalid=np.nan);
+                p_yes[idx,:]=p_yes_gr
+                p_no[idx,:]=p_no_gr
+                likeli_post[idx,:]=likeli_post_gr
+                likeli_pre[idx,:]=likeli_post_gr
     return p_yes,p_no,likeli_post,likeli_pre

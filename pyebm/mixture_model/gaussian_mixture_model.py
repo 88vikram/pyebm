@@ -20,10 +20,10 @@ import scipy.optimize as opt
 import scipy.stats
 
 
-def GMM_Control(Data_all,Data_CN_pruned,Data_AD_pruned,params_nobias,type_opt=1,itvl=1.96,params_pruned=[]):
+def GMM_Control(Data_all,Ncni,Nadi,params_nobias,type_opt=1,itvl=1.96,params_pruned=[]):
 
-    Nevents=len(Data_CN_pruned);
-    Nfeats=Data_CN_pruned[0].shape[1]
+    Nevents=Data_all.shape[1];
+    Nfeats=Data_all.shape[2]
     params = np.zeros((Nevents,5,Nfeats));                   
     bnds_all=[]
     for i in range(Nevents):
@@ -36,19 +36,17 @@ def GMM_Control(Data_all,Data_CN_pruned,Data_AD_pruned,params_nobias,type_opt=1,
         bnds=np.zeros(((Nfeats*4)+1,2));
         if type_opt==1:
             bnds[-1,0]=0.01;
-            bnds[-1,1]=0.99;
-            Ncni = Data_CN_pruned[i].shape[0]
-            Nadi= Data_AD_pruned[i].shape[0]              
+            bnds[-1,1]=0.99;            
             for j in range(Nfeats):
-                bnds[(j*4)+0,0] = params[i,0,j] - itvl*(params[i,1,j]/np.sqrt(Ncni))
-                bnds[(j*4)+0,1] = params[i,0,j] + itvl*(params[i,1,j]/np.sqrt(Ncni))
-                bnds[(j*4)+2,0] = params[i,2,j] - itvl*(params[i,3,j]/np.sqrt(Nadi))
-                bnds[(j*4)+2,1] = params[i,2,j] + itvl*(params[i,3,j]/np.sqrt(Nadi))
+                bnds[(j*4)+0,0] = params[i,0,j] - itvl*(params[i,1,j]/np.sqrt(Ncni[j]))
+                bnds[(j*4)+0,1] = params[i,0,j] + itvl*(params[i,1,j]/np.sqrt(Ncni[j]))
+                bnds[(j*4)+2,0] = params[i,2,j] - itvl*(params[i,3,j]/np.sqrt(Nadi[j]))
+                bnds[(j*4)+2,1] = params[i,2,j] + itvl*(params[i,3,j]/np.sqrt(Nadi[j]))
                         
-                bnds[(j*4)+1,0] = params[i,1,j] - itvl*(params[i,1,j]/np.sqrt(Ncni-2))
-                bnds[(j*4)+1,1] = params[i,1,j] + itvl*(params[i,1,j]/np.sqrt(Ncni-2))
-                bnds[(j*4)+3,0] = params[i,3,j] - itvl*(params[i,3,j]/np.sqrt(Nadi-2))
-                bnds[(j*4)+3,1] = params[i,3,j] + itvl*(params[i,3,j]/np.sqrt(Nadi-2))
+                bnds[(j*4)+1,0] = params[i,1,j] - itvl*(params[i,1,j]/np.sqrt(Ncni[j]-2))
+                bnds[(j*4)+1,1] = params[i,1,j] + itvl*(params[i,1,j]/np.sqrt(Ncni[j]-2))
+                bnds[(j*4)+3,0] = params[i,3,j] - itvl*(params[i,3,j]/np.sqrt(Nadi[j]-2))
+                bnds[(j*4)+3,1] = params[i,3,j] + itvl*(params[i,3,j]/np.sqrt(Nadi[j]-2))
         else:
             bnds[-1,0]=params_nobias[i,4,0];
             bnds[-1,1]=params_nobias[i,4,0];
@@ -81,8 +79,8 @@ def GMM_Control(Data_all,Data_CN_pruned,Data_AD_pruned,params_nobias,type_opt=1,
 
 def GMM(Data,Nfeats,params,bnds):
 
-        idx = bnds[:,1]-bnds[:,0]<=0.001
-        bnds[idx,1] = bnds[idx,0] + 0.001; # Upper bound should be greater 
+        idx = bnds[:,1]-bnds[:,0]<=0.00001
+        bnds[idx,1] = bnds[idx,0] + 0.00001; # Upper bound should be greater 
         tup_arg=(Data,0);
         try:
             p=np.zeros(((Nfeats*4)+1));
@@ -95,7 +93,7 @@ def GMM(Data,Nfeats,params,bnds):
             if Nfeats==1:
                 res=opt.minimize(calculate_likelihood_gmm,p,args=(tup_arg),method='SLSQP', options={'disp': False,'maxiter': 600}, bounds=bnds)
             else:
-                res=opt.minimize(calculate_likelihood_gmmN,p,args=(tup_arg),method='SLSQP', options={'disp': False,'maxiter': 600}, bounds=bnds)
+                res=opt.minimize(calculate_likelihood_gmmN,p,args=(tup_arg),method='SLSQP', options={'disp': False,'maxiter': 600}, bounds=bnds, tol=1e-12)
             if max(np.isnan(res.x))!=1: # In case of convergence to a nan value
                 p[:]=res.x[:]
                 for j in range(Nfeats):
@@ -124,6 +122,7 @@ def calculate_likelihood_gmm(param,data,dummy):
     
     likeli=np.multiply(param_mix,likeli_pre) + np.multiply(1-param_mix,likeli_post) + 1e-100;
     loglikeli=-np.sum(np.log(likeli)) ;
+    
     return loglikeli
 
 def GMM_AY(Data_all,data_AD_raw,data_CN_raw):
@@ -175,9 +174,9 @@ def calculate_likelihood_gmmN(param,data,dummy):
     for j in range(Nfeats):
         cov_n[j,j]=param[(j*4)+1]**2.
         mean_n[j]=param[(j*4)+0]
-    invalid_indices=np.isnan(data);
+    invalid_indices=np.isnan(data[:,0]);
     valid_indices=np.logical_not(invalid_indices)
-    likeli_pre=multivariate_normal.pdf(data[valid_indices],mean=mean_n, cov=cov_n);
+    likeli_pre=multivariate_normal.pdf(data[valid_indices,:],mean=mean_n, cov=cov_n);
     
     cov_d = np.zeros((Nfeats,Nfeats))
     mean_d=np.zeros(Nfeats)
@@ -185,7 +184,7 @@ def calculate_likelihood_gmmN(param,data,dummy):
         cov_d[j,j]=param[(j*4)+3]**2.
         mean_d[j]=param[(j*4)+2]
         
-    likeli_post=multivariate_normal.pdf(data[valid_indices],mean=mean_d, cov=cov_d);
+    likeli_post=multivariate_normal.pdf(data[valid_indices,:],mean=mean_d, cov=cov_d);
     
     likeli=np.multiply(param_mix,likeli_pre) + np.multiply(1-param_mix,likeli_post) + 1e-100;
     loglikeli=-np.sum(np.log(likeli)) ;
@@ -226,17 +225,17 @@ def calculate_prob_mmN(Data,params,val_invalid=0.5):
     m=np.shape(Data);
     Nfeats=m[2]
     p_yes=np.zeros((m[0],m[1]));
-    likeli_pre_all=np.zeros(m);
-    likeli_post_all=np.zeros(m); 
+    likeli_pre_all=np.zeros((m[0],m[1]));
+    likeli_post_all=np.zeros((m[0],m[1])); 
     for i in range(0,m[1]):
         r=1-params[i,4,0]
         Datai=Data[:,i,:];
                       
         p=np.zeros(m[0]);
-        invalid_indices=np.isnan(Datai)
+        invalid_indices=np.isnan(Datai[:,0])
         p[invalid_indices]=val_invalid;
         valid_indices=np.logical_not(invalid_indices);
-        Datai_valid=Datai[valid_indices];
+        Datai_valid=Datai[valid_indices,:];
         # This is where the modification ends           
         cov_n = np.zeros((Nfeats,Nfeats))
         mean_n=np.zeros(Nfeats)

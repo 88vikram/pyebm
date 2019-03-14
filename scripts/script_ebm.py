@@ -26,7 +26,7 @@ print([ModelOutput.BiomarkerList[x] for x in ModelOutput.MeanCentralOrdering])
 
 from collections import namedtuple
 MO = namedtuple('MethodOptions','MixtureModel Bootstrap')
-MO.Bootstrap=0; MO.MixtureModel='vv2';
+MO.Bootstrap=0; MO.MixtureModel='GMMvv2';
 VO = namedtuple('VerboseOptions','Distributions')
 VO.Distributions=1; 
 ModelOutput,SubjTrain,SubjTest=ebm.fit('./resources/Data_7.csv',MethodOptions=MO,VerboseOptions=VO)
@@ -35,7 +35,7 @@ ModelOutput,SubjTrain,SubjTest=ebm.fit('./resources/Data_7.csv',MethodOptions=MO
 
 from collections import namedtuple
 MO = namedtuple('MethodOptions','MixtureModel Bootstrap')
-MO.Bootstrap=5; MO.MixtureModel='vv2';
+MO.Bootstrap=5; MO.MixtureModel='GMMvv2';
 VO = namedtuple('VerboseOptions','Ordering PlotOrder Distributions')
 VO.Ordering=1; VO.PlotOrder=1; VO.Distributions=0; 
 ModelOutput,SubjTrain,SubjTest=ebm.fit('./resources/Data_7.csv',MethodOptions=MO,VerboseOptions=VO)
@@ -45,7 +45,7 @@ print([ModelOutput.BiomarkerList[x] for x in ModelOutput.MeanCentralOrdering])
 ## Example with Patient Staging and visual output. Also, a pandas dataframe can be sent as an input instead of CSV
 from collections import namedtuple
 MO = namedtuple('MethodOptions','MixtureModel Bootstrap PatientStaging')
-MO.Bootstrap=0; MO.MixtureModel='vv2'; MO.PatientStaging=['ml','l']
+MO.Bootstrap=0; MO.MixtureModel='GMMvv2'; MO.PatientStaging=['ml','l']
 VO = namedtuple('VerboseOptions','Distributions PatientStaging')
 VO.PatientStaging=1; VO.Distributions=0; 
 import pandas as pd
@@ -55,7 +55,7 @@ ModelOutput,SubjTrain,SubjTest=ebm.fit(D,MethodOptions=MO,VerboseOptions=VO)
 
 from collections import namedtuple
 MO = namedtuple('MethodOptions','MixtureModel Bootstrap PatientStaging')
-MO.Bootstrap=0; MO.MixtureModel='vv1'; MO.PatientStaging=['exp','p']
+MO.Bootstrap=0; MO.MixtureModel='GMMvv2'; MO.PatientStaging=['exp','p']
 VO = namedtuple('VerboseOptions','Distributions PatientStaging')
 VO.PatientStaging=1; VO.Distributions=0; 
 import pandas as pd

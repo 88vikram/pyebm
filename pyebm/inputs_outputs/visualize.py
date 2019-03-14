@@ -25,7 +25,7 @@ def BiomarkerDistribution(Data_all,params_all,BiomarkersList):
 
     m=np.shape(Data_all)
     n=len(params_all)
-    fig, ax = plt.subplots(int(round(1+m[1]/3)), 3, figsize=(13, 4*(1+m[1]/3)))
+    fig, ax = plt.subplots(int(np.ceil(m[1]/3)), 3, figsize=(13, 4*np.ceil(m[1]/3)))
     for i in range(m[1]):
             Dalli=Data_all[:,i,0];
             valid_data=np.logical_not(np.isnan(Dalli))
@@ -34,15 +34,17 @@ def BiomarkerDistribution(Data_all,params_all,BiomarkersList):
             for j in range(n):
                 i1 = int(i/3);
                 j1 = np.remainder(i,3)
-                paramsij=params_all[j][i,:];
-                norm_pre=scipy.stats.norm(loc=paramsij[0], scale=paramsij[1]);
-                norm_post=scipy.stats.norm(loc=paramsij[2],scale=paramsij[3]);
+                paramsij=params_all[j];
+                norm_pre=scipy.stats.norm(loc=paramsij.Control[i,0], scale=paramsij.Control[i,1]);
+                norm_post=scipy.stats.norm(loc=paramsij.Disease[i,0],scale=paramsij.Disease[i,1]);
+                likeli_pre=norm_pre.pdf(x_grid)
+                likeli_post=norm_post.pdf(x_grid)
                 h=np.histogram(Dallis,50)                          
                 maxh=np.nanmax(h[0])
                 ax[i1,j1].hist(Dallis,50, fc='blue', histtype='stepfilled', alpha=0.3, normed=False)
                 #ylim=ax[i,j].get_ylim()
-                likeli_pre=norm_pre.pdf(x_grid)*(paramsij[4]);
-                likeli_post=norm_post.pdf(x_grid)*(1-paramsij[4]);
+                likeli_pre=likeli_pre*(paramsij.Mixing[i]);
+                likeli_post=likeli_post*(1-paramsij.Mixing[i]);
                 likeli_tot=likeli_pre+likeli_post;
                 likeli_tot_corres = np.zeros(len(h[1])-1)
                 bin_size=h[1][1]-h[1][0]

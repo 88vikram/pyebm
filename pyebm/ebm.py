@@ -15,7 +15,6 @@
 from __future__ import print_function
 from pyebm.mixture_model import do_classification as dc 
 from pyebm import core_utilities as cu
-import numpy as np
 
 def fit(DataIn,MethodOptions=False,VerboseOptions=False,Factors=None,Labels = None,DataTest=[],Groups=[]):
     
@@ -44,26 +43,19 @@ def fit(DataIn,MethodOptions=False,VerboseOptions=False,Factors=None,Labels = No
         data_CN_raw = data_CN_raw_list[i];
         Data_all =  data_all_list[i];   
         GroupValues =    [GroupValues_list[i]] ;
-        params_opt=cu.do_mixturemodel(DMO,data_AD_raw,data_CN_raw,Data_all)                                     
-        p_yes,p_no,likeli_post,likeli_pre=dc.Classify(Data_all,params_opt);                                               
-        for ni in range(len(BiomarkersList)):
-            idx = np.isnan(p_yes[:,ni])
-            p_yes[idx,ni]=1-params_opt[ni,4,0]  
-        pi0,event_centers=cu.find_central_ordering(Data_all,p_yes,params_opt,Groups,GroupValues,DMO,'ebm')
+        BiomarkerParams,p_yes,p_no,likeli_post,likeli_pre=cu.do_mixturemodel(DMO,data_AD_raw,data_CN_raw,Data_all,Groups,GroupValues)                                      
+        pi0,event_centers=cu.find_central_ordering(Data_all,p_yes,BiomarkerParams,Groups,GroupValues,DMO,'ebm')
         subj_stages=cu.do_patient_staging(pi0,event_centers,DMO,p_yes,p_no,likeli_post,likeli_pre,Groups,GroupValues)
         SubjTrain=cu.compile_subject_data(ptid_all_list[i],p_yes,subj_stages)
         SubjTest=[];
         subj_stages_test=[];
         if len(Data_test_all)>0:
-            p_yes_test,p_no_test,likeli_post_test,likeli_pre_test=dc.Classify(Data_test_all,params_opt);             
-            for ni in range(len(BiomarkersList)):
-                idx = np.isnan(p_yes_test[:,ni])
-                p_yes_test[idx,ni]=1-params_opt[ni,4,0] 
+            p_yes_test,p_no_test,likeli_post_test,likeli_pre_test=dc.Classify(Data_test_all,BiomarkerParams,DMO);             
             subj_stages_test=cu.do_patient_staging(pi0,event_centers,DMO,p_yes_test,p_no_test,likeli_post_test,likeli_pre_test,Groups,GroupValues_test)
             SubjTest=cu.compile_subject_data(pdDataTest_all['PTID'],p_yes_test,subj_stages_test)
             
         pi0_all.append(pi0)
-        params_opt_all.append(params_opt)
+        params_opt_all.append(BiomarkerParams)
         event_centers_all.append(event_centers)
         SubjTrainAll.append(SubjTrain)
         SubjTestAll.append(SubjTest)
@@ -71,7 +63,7 @@ def fit(DataIn,MethodOptions=False,VerboseOptions=False,Factors=None,Labels = No
     pi0_mean, evn, evn_full = cu.get_mean_ordering(pi0_all,event_centers_all, data_AD_raw_list, Groups,GroupValues)
     
     ModelOutput=cu.compile_model_output(BiomarkersList,pi0_mean,pi0_all,event_centers_all,params_opt_all)
-    cu.show_outputs(Data_all, Data_test_all, pdData_all, Labels, pdDataTest_all, subj_stages, subj_stages_test, params_opt,\
-                 evn_full, evn, BiomarkersList,pi0_all,pi0_mean,DVO,Groups,GroupValues,'ebm')                                  
+    cu.show_outputs(Data_all, Data_test_all, pdData_all, Labels, pdDataTest_all, subj_stages, subj_stages_test, BiomarkerParams,\
+                 evn_full, evn, BiomarkersList,pi0_all,pi0_mean,DMO,DVO,Groups,GroupValues,'ebm')                                  
 
     return ModelOutput,SubjTrainAll,SubjTestAll

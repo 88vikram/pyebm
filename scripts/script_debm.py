@@ -16,6 +16,8 @@
 ## Simplest function call (with default parameters)
 from __future__ import print_function
 
+import os
+os.chdir('./../') # The working directory has to be the parent pyebm folder. Skip this if you are already in this folder.
 from pyebm import debm, ebm
 
 ModelOutput, SubjTrain, SubjTest = debm.fit('./resources/Data_7.csv')
@@ -27,7 +29,7 @@ from collections import namedtuple
 
 MO = namedtuple('MethodOptions', 'MixtureModel Bootstrap')
 MO.Bootstrap = 0;
-MO.MixtureModel = 'vv2';
+MO.MixtureModel = 'GMMvv2';
 VO = namedtuple('VerboseOptions', 'Distributions')
 VO.Distributions = 1;
 ModelOutput, SubjTrain, SubjTest = debm.fit('./resources/Data_7.csv', MethodOptions=MO, VerboseOptions=VO)
@@ -38,7 +40,7 @@ from collections import namedtuple
 
 MO = namedtuple('MethodOptions', 'MixtureModel Bootstrap')
 MO.Bootstrap = 5;
-MO.MixtureModel = 'vv2';
+MO.MixtureModel = 'GMMvv2';
 VO = namedtuple('VerboseOptions', 'Ordering PlotOrder Distributions')
 VO.Ordering = 1;
 VO.PlotOrder = 1;
@@ -52,7 +54,7 @@ from collections import namedtuple
 
 MO = namedtuple('MethodOptions', 'MixtureModel Bootstrap PatientStaging')
 MO.Bootstrap = 0;
-MO.MixtureModel = 'vv2';
+MO.MixtureModel = 'GMMvv2';
 MO.PatientStaging = ['ml', 'l']
 VO = namedtuple('VerboseOptions', 'Distributions PatientStaging')
 VO.PatientStaging = 1;
@@ -66,7 +68,7 @@ from collections import namedtuple
 
 MO = namedtuple('MethodOptions', 'MixtureModel Bootstrap PatientStaging')
 MO.Bootstrap = 0;
-MO.MixtureModel = 'vv2';
+MO.MixtureModel = 'GMMvv2';
 MO.PatientStaging = ['exp', 'p']
 VO = namedtuple('VerboseOptions', 'Distributions PatientStaging')
 VO.PatientStaging = 1;
@@ -83,12 +85,12 @@ from collections import namedtuple
 
 MO1 = namedtuple('MethodOptions', 'MixtureModel Bootstrap PatientStaging')
 MO1.Bootstrap = 0;
-MO1.MixtureModel = 'vv2';
+MO1.MixtureModel = 'GMMvv2';
 MO1.PatientStaging = ['exp', 'p']
 
 MO2 = namedtuple('MethodOptions', 'MixtureModel Bootstrap PatientStaging')
 MO2.Bootstrap = 0;
-MO2.MixtureModel = 'vv2';
+MO2.MixtureModel = 'GMMvv2';
 MO2.PatientStaging = ['ml', 'l']
 
 VO = namedtuple('VerboseOptions', 'Distributions PatientStaging')
@@ -142,7 +144,7 @@ from collections import namedtuple
 
 MO1 = namedtuple('MethodOptions', 'MixtureModel Bootstrap PatientStaging')
 MO1.Bootstrap = 0;
-MO1.MixtureModel = 'vv2';
+MO1.MixtureModel = 'GMMvv2';
 MO1.PatientStaging = ['exp', 'p']
 
 Y = D['Diagnosis'].copy();

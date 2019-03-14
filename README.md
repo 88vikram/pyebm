@@ -27,7 +27,7 @@ Python 3.5, numpy 1.16, pandas 0.24, sklearn 0.20, scipy 1.2, seaborn 0.9, stats
 ### (optional) MethodOptions:
 Named Tuple with any or all of the following fields:
 
-*   MixtureModel - Choose the mixture model algorithm (Options: 'vv1'[2],'vv2'(default)[4], 'ay'[3]) 
+*   MixtureModel - Choose the mixture model algorithm (Options: 'GMMvv1'[2],'GMMvv2'(default)[4], 'GMMay'[3]) 
 *   Bootstrap - Number of iterations in the bootstrapping [default - Turned Off].
 *   PatientStaging - Choose the patient staging algorithm, with a two element list consisting of ['exp'/'ml','p'/'l']. The first element in the list chooses 'ml' for most likely stage[1,2,3] or 'exp' for expected stage[4]. The second element in the list chooses 'l' for likelihood[1,2,3] or 'p' for posterior probability[4].
 *   (Only in EBM.Control) NStartpoints, Niterations and N_MCMC are algorithm specific parameters for EBM method.
