@@ -156,7 +156,7 @@ def do_mixturemodel(DMO,data_AD_raw,data_CN_raw,Data_all,Groups,GroupValues):
                         flag_stop=1;
                     mixes_old = np.copy(mixes)
             elif DMO.MixtureModel=='GMMvv1':
-                params_opt,bnds_all = gmm.GMM_Control(Data_all,Data_CN_pruned,Data_AD_pruned,params_pruned,type_opt=1);
+                params_opt,bnds_all = gmm.GMM_Control(Data_all,Ncni,Nadi,params_pruned,type_opt=1);
             elif DMO.MixtureModel=='GMMay':
                 params_opt=gmm.GMM_AY(Data_all,data_AD_raw,data_CN_raw)
             if len(Groups)==0:  
@@ -168,7 +168,7 @@ def do_mixturemodel(DMO,data_AD_raw,data_CN_raw,Data_all,Groups,GroupValues):
                 gval=gval[idx_valid]
                 for g in gval:
                     idx=GroupValues[0]==g
-                    params_grp,bnds_all = gmm.GMM_Control(Data_all[idx,:],Data_CN_pruned,Data_AD_pruned,params_opt,itvl=0.001);
+                    params_grp,bnds_all = gmm.GMM_Control(Data_all[idx,:],Ncni,Nadi,params_opt,itvl=0.001);
                     BiomarkerParams.Mixing.append( params_grp[:,4,0] )
             if params_opt.shape[2]==1:
                 BiomarkerParams.Control = params_opt[:,0:2,0]

@@ -102,7 +102,7 @@ def Classify(Data4Classification,BiomarkerParams,DMO,Groups = None ,GroupValues 
             for g in gval:
                 count=count+1
                 idx=GroupValues[0]==g
-                params[:,4,0] = BiomarkerParams.Mixing[count]
+                params[:,4] = BiomarkerParams.Mixing[count]
                 if Nfeats==1:
                     p_yes_gr,p_no_gr,likeli_pre_gr,likeli_post_gr=calculate_prob_mm(Data4Classification[idx,:,0],params,val_invalid=np.nan);
                 else:

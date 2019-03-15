@@ -38,15 +38,15 @@ def GMM_Control(Data_all,Ncni,Nadi,params_nobias,type_opt=1,itvl=1.96,params_pru
             bnds[-1,0]=0.01;
             bnds[-1,1]=0.99;            
             for j in range(Nfeats):
-                bnds[(j*4)+0,0] = params[i,0,j] - itvl*(params[i,1,j]/np.sqrt(Ncni[j]))
-                bnds[(j*4)+0,1] = params[i,0,j] + itvl*(params[i,1,j]/np.sqrt(Ncni[j]))
-                bnds[(j*4)+2,0] = params[i,2,j] - itvl*(params[i,3,j]/np.sqrt(Nadi[j]))
-                bnds[(j*4)+2,1] = params[i,2,j] + itvl*(params[i,3,j]/np.sqrt(Nadi[j]))
+                bnds[(j*4)+0,0] = params[i,0,j] - itvl*(params[i,1,j]/np.sqrt(Ncni[i]))
+                bnds[(j*4)+0,1] = params[i,0,j] + itvl*(params[i,1,j]/np.sqrt(Ncni[i]))
+                bnds[(j*4)+2,0] = params[i,2,j] - itvl*(params[i,3,j]/np.sqrt(Nadi[i]))
+                bnds[(j*4)+2,1] = params[i,2,j] + itvl*(params[i,3,j]/np.sqrt(Nadi[i]))
                         
-                bnds[(j*4)+1,0] = params[i,1,j] - itvl*(params[i,1,j]/np.sqrt(Ncni[j]-2))
-                bnds[(j*4)+1,1] = params[i,1,j] + itvl*(params[i,1,j]/np.sqrt(Ncni[j]-2))
-                bnds[(j*4)+3,0] = params[i,3,j] - itvl*(params[i,3,j]/np.sqrt(Nadi[j]-2))
-                bnds[(j*4)+3,1] = params[i,3,j] + itvl*(params[i,3,j]/np.sqrt(Nadi[j]-2))
+                bnds[(j*4)+1,0] = params[i,1,j] - itvl*(params[i,1,j]/np.sqrt(Ncni[i]-2))
+                bnds[(j*4)+1,1] = params[i,1,j] + itvl*(params[i,1,j]/np.sqrt(Ncni[i]-2))
+                bnds[(j*4)+3,0] = params[i,3,j] - itvl*(params[i,3,j]/np.sqrt(Nadi[i]-2))
+                bnds[(j*4)+3,1] = params[i,3,j] + itvl*(params[i,3,j]/np.sqrt(Nadi[i]-2))
         else:
             bnds[-1,0]=params_nobias[i,4,0];
             bnds[-1,1]=params_nobias[i,4,0];
