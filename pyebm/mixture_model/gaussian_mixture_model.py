@@ -15,73 +15,95 @@
 from __future__ import print_function
 
 import numpy as np
-from scipy.stats import multivariate_normal
 import scipy.optimize as opt
 import scipy.stats
 
 
-def GMM_Control(Data_all,Ncni,Nadi,params_nobias,type_opt=1,itvl=1.96,params_pruned=[]):
+def GMM_Control(Data_all,Ncni,Nadi,Groups,GroupValues,params_nobias,type_opt=1,itvl=1.96,HyperParams=1,params_pruned=[],Mixing=[]):
 
     Nevents=Data_all.shape[1];
     Nfeats=Data_all.shape[2]
     params = np.zeros((Nevents,5,Nfeats));                   
-    bnds_all=[]
+    
+    if len(Groups)==0:
+        for i in range(Nevents):
+            for j in range(Nfeats):
+                params[i,:,j]=params_nobias[i,:,j];
+        params_all = [params]
+    else:
+        params_all = params_nobias
+    
     for i in range(Nevents):
-        for j in range(Nfeats):
-            params[i,:,j]=params_nobias[i,:,j]; 
-
-    for i in range(Nevents):
+        bnds_all=[]
+        paramsik = []
         Dalli=Data_all[:,i,:];
         Dalli_valid_c = Dalli
-        bnds=np.zeros(((Nfeats*4)+1,2));
-        if type_opt==1:
-            bnds[-1,0]=0.01;
-            bnds[-1,1]=0.99;            
-            for j in range(Nfeats):
-                bnds[(j*4)+0,0] = params[i,0,j] - itvl*(params[i,1,j]/np.sqrt(Ncni[i]))
-                bnds[(j*4)+0,1] = params[i,0,j] + itvl*(params[i,1,j]/np.sqrt(Ncni[i]))
-                bnds[(j*4)+2,0] = params[i,2,j] - itvl*(params[i,3,j]/np.sqrt(Nadi[i]))
-                bnds[(j*4)+2,1] = params[i,2,j] + itvl*(params[i,3,j]/np.sqrt(Nadi[i]))
-                        
-                bnds[(j*4)+1,0] = params[i,1,j] - itvl*(params[i,1,j]/np.sqrt(Ncni[i]-2))
-                bnds[(j*4)+1,1] = params[i,1,j] + itvl*(params[i,1,j]/np.sqrt(Ncni[i]-2))
-                bnds[(j*4)+3,0] = params[i,3,j] - itvl*(params[i,3,j]/np.sqrt(Nadi[i]-2))
-                bnds[(j*4)+3,1] = params[i,3,j] + itvl*(params[i,3,j]/np.sqrt(Nadi[i]-2))
-        else:
-            bnds[-1,0]=params_nobias[i,4,0];
-            bnds[-1,1]=params_nobias[i,4,0];
-            if type_opt==2:
-                for j in range(Nfeats):
-                    bnds[(j*4)+0,0] = np.min([params[i,0,j],params[i,2,j]])
-                    bnds[(j*4)+0,1] = np.max([params[i,0,j],params[i,2,j]])
-                    bnds[(j*4)+2,0] = np.min([params[i,0,j],params[i,2,j]])
-                    bnds[(j*4)+2,1] = np.max([params[i,0,j],params[i,2,j]])
-                            
-                    bnds[(j*4)+1,0] = params[i,1,j]
-                    bnds[(j*4)+1,1] = params[i,1,j]*2
-                    bnds[(j*4)+3,0] = params[i,3,j]
-                    bnds[(j*4)+3,1] = params[i,3,j]*2
+        for k in range(len(params_all)):
+            params = params_all[k]
+            if type(params_pruned)== list:
+                if len(params_pruned)>0:
+                    pp = params_pruned[k]
+                else:
+                    pp = []
             else:
+                pp=params_pruned
+            paramsik.append(params[i,:,:])
+            bnds=np.zeros(((Nfeats*4)+1,2));
+            if type_opt==1:
+                bnds[-1,0]=0.01;
+                bnds[-1,1]=0.99;            
                 for j in range(Nfeats):
-                    bnds[(j*4)+0,0] = np.min([params_pruned[i,0,j],params_pruned[i,2,j]])
-                    bnds[(j*4)+0,1] = np.max([params_pruned[i,0,j],params_pruned[i,2,j]])
-                    bnds[(j*4)+2,0] = np.min([params_pruned[i,0,j],params_pruned[i,2,j]])
-                    bnds[(j*4)+2,1] = np.max([params_pruned[i,0,j],params_pruned[i,2,j]])
+                    bnds[(j*4)+0,0] = params[i,0,j] - itvl*(params[i,1,j]/np.sqrt(Ncni[i]))
+                    bnds[(j*4)+0,1] = params[i,0,j] + itvl*(params[i,1,j]/np.sqrt(Ncni[i]))
+                    bnds[(j*4)+2,0] = params[i,2,j] - itvl*(params[i,3,j]/np.sqrt(Nadi[i]))
+                    bnds[(j*4)+2,1] = params[i,2,j] + itvl*(params[i,3,j]/np.sqrt(Nadi[i]))
                             
-                    bnds[(j*4)+1,0] = params_pruned[i,1,j]
-                    bnds[(j*4)+1,1] = params_pruned[i,1,j]*2
-                    bnds[(j*4)+3,0] = params_pruned[i,3,j]
-                    bnds[(j*4)+3,1] = params_pruned[i,3,j]*2
-        bnds_all.append(bnds)
-        params[i,:,:]=GMM(Dalli_valid_c,Nfeats,params[i,:,:],bnds)
-    
-    return params,bnds_all
+                    bnds[(j*4)+1,0] = params[i,1,j] - itvl*(params[i,1,j]/np.sqrt(Ncni[i]-2))
+                    bnds[(j*4)+1,1] = params[i,1,j] + itvl*(params[i,1,j]/np.sqrt(Ncni[i]-2))
+                    bnds[(j*4)+3,0] = params[i,3,j] - itvl*(params[i,3,j]/np.sqrt(Nadi[i]-2))
+                    bnds[(j*4)+3,1] = params[i,3,j] + itvl*(params[i,3,j]/np.sqrt(Nadi[i]-2))
+            else:
+                bnds[-1,0]=params_all[k][i,4,0];
+                bnds[-1,1]=params_all[k][i,4,0];
+                if type_opt==2:
+                    for j in range(Nfeats):
+                        bnds[(j*4)+0,0] = np.min([params[i,0,j],params[i,2,j]])
+                        bnds[(j*4)+0,1] = np.max([params[i,0,j],params[i,2,j]])
+                        bnds[(j*4)+2,0] = np.min([params[i,0,j],params[i,2,j]])
+                        bnds[(j*4)+2,1] = np.max([params[i,0,j],params[i,2,j]])
+                                
+                        bnds[(j*4)+1,0] = params[i,1,j]
+                        bnds[(j*4)+1,1] = params[i,1,j]*2
+                        bnds[(j*4)+3,0] = params[i,3,j]
+                        bnds[(j*4)+3,1] = params[i,3,j]*2
+                else:
+                    for j in range(Nfeats):
+                        bnds[(j*4)+0,0] = np.min([pp[i,0,j],pp[i,2,j]])
+                        bnds[(j*4)+0,1] = np.max([pp[i,0,j],pp[i,2,j]])
+                        bnds[(j*4)+2,0] = np.min([pp[i,0,j],pp[i,2,j]])
+                        bnds[(j*4)+2,1] = np.max([pp[i,0,j],pp[i,2,j]])
+                                
+                        bnds[(j*4)+1,0] = pp[i,1,j]
+                        bnds[(j*4)+1,1] = pp[i,1,j]*2
+                        bnds[(j*4)+3,0] = pp[i,3,j]
+                        bnds[(j*4)+3,1] = pp[i,3,j]*2
+            bnds_all.append(bnds)
+        if len(params_all)==1:
+            params[i,:,:]=GMM(Dalli_valid_c,Nfeats,params[i,:,:],bnds,Groups,GroupValues,[])
+        else:
+            params_grps_i=TransferGMM(Dalli_valid_c,Nfeats,paramsik,bnds_all,Groups,GroupValues,HyperParams)
+            for k in range(len(params_all)):
+                params_all[k][i,:,0] = params_grps_i[:,k]
+    if len(params_all)==1:
+        params_all = params
+    return params_all,bnds_all
 
-def GMM(Data,Nfeats,params,bnds):
 
-        idx = bnds[:,1]-bnds[:,0]<=0.00001
-        bnds[idx,1] = bnds[idx,0] + 0.00001; # Upper bound should be greater 
-        tup_arg=(Data,0);
+def GMM(Data,Nfeats,params,bnds,Groups,GroupValues,Mixing):
+
+        idx = bnds[:,1]-bnds[:,0]<=0.01
+        bnds[idx,1] = bnds[idx,0] + 0.01;
+        tup_arg=(Data,Groups,GroupValues,Mixing);
         try:
             p=np.zeros(((Nfeats*4)+1));
             for j in range(Nfeats):
@@ -92,8 +114,6 @@ def GMM(Data,Nfeats,params,bnds):
             p[-1]=params[4,0]
             if Nfeats==1:
                 res=opt.minimize(calculate_likelihood_gmm,p,args=(tup_arg),method='SLSQP', options={'disp': False,'maxiter': 600}, bounds=bnds)
-            else:
-                res=opt.minimize(calculate_likelihood_gmmN,p,args=(tup_arg),method='SLSQP', options={'disp': False,'maxiter': 600}, bounds=bnds, tol=1e-12)
             if max(np.isnan(res.x))!=1: # In case of convergence to a nan value
                 p[:]=res.x[:]
                 for j in range(Nfeats):
@@ -107,22 +127,46 @@ def GMM(Data,Nfeats,params,bnds):
             print('Warning: Error in Gaussian Mixture Model')
         return params
 
-def calculate_likelihood_gmm(param,data,dummy):
-    # The dummy argument is a hack to overcome how single element tuple is handled 
-    # differently in windows and linux. While it remains a single element tuple in windows,
-    # in linux, the data type changes to that of the tuple element.
-    
-    param_mix=param[4];
-    norm_pre=scipy.stats.norm(loc=param[0], scale=param[1]);
-    norm_post=scipy.stats.norm(loc=param[2],scale=param[3]);
-    invalid_indices=np.isnan(data);
-    valid_indices=np.logical_not(invalid_indices)
-    likeli_pre=norm_pre.pdf(data[valid_indices]);
-    likeli_post=norm_post.pdf(data[valid_indices]);
-    
-    likeli=np.multiply(param_mix,likeli_pre) + np.multiply(1-param_mix,likeli_post) + 1e-100;
-    loglikeli=-np.sum(np.log(likeli)) ;
-    
+def calculate_likelihood_gmm(param,data,Groups,GroupValues,Mixing):
+    if len(Mixing)==0:
+        param_mix=param[4];
+        norm_pre=scipy.stats.norm(loc=param[0], scale=param[1]);
+        norm_post=scipy.stats.norm(loc=param[2],scale=param[3]);                                            #uniform. loc=min boarder, scale=max-min
+        invalid_indices=np.isnan(data);
+        valid_indices=np.logical_not(invalid_indices)
+        likeli_pre=norm_pre.pdf(data[valid_indices]);
+        likeli_post=norm_post.pdf(data[valid_indices]);
+        
+        likeli=np.multiply(param_mix,likeli_pre) + np.multiply(1-param_mix,likeli_post) + 1e-100;
+        loglikeli=-np.sum(np.log(likeli));
+    else:
+        gval=np.unique(GroupValues[0])
+        idx_valid=~np.isnan(gval)
+        gval=gval[idx_valid]
+        loglikeli_list=[]
+        
+        norm_pre=scipy.stats.norm(loc=param[0], scale=param[1]);
+        norm_post=scipy.stats.norm(loc=param[2],scale=param[3]);                                            #uniform. loc=min boarder, scale=max-min
+
+        for g in range(len(gval)):
+            param_mix=Mixing[g];
+            idx=GroupValues[0]==gval[g]
+            data_g=data[idx]
+            invalid_indices=np.isnan(data_g);
+            valid_indices=np.logical_not(invalid_indices)
+            data_g = data_g[valid_indices]
+            likeli_pre=norm_pre.pdf(data_g);
+            likeli_post=norm_post.pdf(data_g);
+            likeli=np.multiply(param_mix,likeli_pre) + np.multiply(1-param_mix,likeli_post) + 1e-100;
+            loglikeli=-np.sum(np.log(likeli)) ;  
+            
+            ##### Including weighted sum
+            #loglikeli = np.divide(loglikeli,len(data_g)) 
+            ##### Including weighted sum
+            
+            loglikeli_list.append(loglikeli);
+            
+        loglikeli=np.sum(loglikeli_list)
     return loglikeli
 
 def GMM_AY(Data_all,data_AD_raw,data_CN_raw):
@@ -159,36 +203,6 @@ def GMM_AY(Data_all,data_AD_raw,data_CN_raw):
             print('Warning: Error in Gaussian Mixture Model')
             
     return params
-
-def calculate_likelihood_gmmN(param,data,dummy):
-    # The dummy argument is a hack to overcome how single element tuple is handled 
-    # differently in windows and linux. While it remains a single element tuple in windows,
-    # in linux, the data type changes to that of the tuple element.
-    
-    m=np.shape(data)
-        
-    Nfeats=m[1]
-    param_mix=param[-1];
-    cov_n = np.zeros((Nfeats,Nfeats))
-    mean_n=np.zeros(Nfeats)
-    for j in range(Nfeats):
-        cov_n[j,j]=param[(j*4)+1]**2.
-        mean_n[j]=param[(j*4)+0]
-    invalid_indices=np.isnan(data[:,0]);
-    valid_indices=np.logical_not(invalid_indices)
-    likeli_pre=multivariate_normal.pdf(data[valid_indices,:],mean=mean_n, cov=cov_n);
-    
-    cov_d = np.zeros((Nfeats,Nfeats))
-    mean_d=np.zeros(Nfeats)
-    for j in range(Nfeats):
-        cov_d[j,j]=param[(j*4)+3]**2.
-        mean_d[j]=param[(j*4)+2]
-        
-    likeli_post=multivariate_normal.pdf(data[valid_indices,:],mean=mean_d, cov=cov_d);
-    
-    likeli=np.multiply(param_mix,likeli_pre) + np.multiply(1-param_mix,likeli_post) + 1e-100;
-    loglikeli=-np.sum(np.log(likeli)) ;
-    return loglikeli
     
 def calculate_prob_mm(Data,params,val_invalid=0.5):
     # Works for single dimensional features
@@ -218,46 +232,3 @@ def calculate_prob_mm(Data,params,val_invalid=0.5):
         p_yes[:,i]=p;
     p_no=1-p_yes;
     return p_yes,p_no,likeli_pre_all,likeli_post_all
-
-def calculate_prob_mmN(Data,params,val_invalid=0.5):
-    # Works for N dimensional features
-    
-    m=np.shape(Data);
-    Nfeats=m[2]
-    p_yes=np.zeros((m[0],m[1]));
-    likeli_pre_all=np.zeros((m[0],m[1]));
-    likeli_post_all=np.zeros((m[0],m[1])); 
-    for i in range(0,m[1]):
-        r=1-params[i,4,0]
-        Datai=Data[:,i,:];
-                      
-        p=np.zeros(m[0]);
-        invalid_indices=np.isnan(Datai[:,0])
-        p[invalid_indices]=val_invalid;
-        valid_indices=np.logical_not(invalid_indices);
-        Datai_valid=Datai[valid_indices,:];
-        # This is where the modification ends           
-        cov_n = np.zeros((Nfeats,Nfeats))
-        mean_n=np.zeros(Nfeats)
-        for j in range(Nfeats):
-            cov_n[j,j]=params[i,1,j]**2.
-            mean_n[j]=params[i,0,j]
-        
-        likeli_pre=multivariate_normal.pdf(Datai_valid,mean=mean_n, cov=cov_n);
-        
-        cov_d = np.zeros((Nfeats,Nfeats))
-        mean_d=np.zeros(Nfeats)
-        for j in range(Nfeats):
-            cov_d[j,j]=params[i,3,j]**2.
-            mean_d[j]=params[i,2,j]
-        
-        likeli_post=multivariate_normal.pdf(Datai_valid,mean=mean_d, cov=cov_d);
-        
-        p[valid_indices]=np.divide(likeli_post*r,(likeli_post*r)+(1-r)*likeli_pre+1e-100);
-        likeli_pre_all[valid_indices,i]=likeli_pre
-        likeli_post_all[valid_indices,i]=likeli_post
-        likeli_pre_all[invalid_indices,i] = 0.5
-        likeli_post_all[invalid_indices, i] = 0.5
-        p_yes[:,i]=p;
-    p_no=1-p_yes;
-    return p_yes,p_no,likeli_pre,likeli_post

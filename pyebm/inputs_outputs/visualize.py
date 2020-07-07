@@ -85,14 +85,14 @@ def BiomarkerDistribution(Data_all,params_all,BiomarkersList):
     
 def Ordering(labels, pi0_all,pi0_mean, plotorder):
 
-    columns = ['Features', 'Event Position', 'Count']
+    columns = ['Biomarkers', 'Event Position', 'Count']
     datapivot = pd.DataFrame(columns = columns)
     for i in range(len(labels)):
         bb = [item.index(i) for item in pi0_all]
         for j in range(len(labels)):
-            cc = pd.DataFrame([[bb.count(j),j, labels[i]]], index = [j], columns = ['Count','Event Position','Features'])
+            cc = pd.DataFrame([[bb.count(j),j, labels[i]]], index = [j], columns = ['Count','Event Position','Biomarkers'])
             datapivot = datapivot.append(cc)
-    datapivot = datapivot.pivot("Features", "Event Position", "Count")
+    datapivot = datapivot.pivot("Biomarkers", "Event Position", "Count")
     if plotorder == True:
         newindex = []
         for i in range(len(list(pi0_mean))):
@@ -102,9 +102,10 @@ def Ordering(labels, pi0_all,pi0_mean, plotorder):
     xticks = np.arange(len(labels)) + 1
     datapivot = datapivot[datapivot.columns].astype(float)
     fig, ax = plt.subplots(1,1,figsize=(7, 7))
-    heatmap = sns.heatmap(datapivot, cmap = 'binary', xticklabels=xticks, vmin=0, vmax=len(pi0_all),ax=ax)
+    sns.set(font_scale=1.5)
+    heatmap = sns.heatmap(datapivot, cmap = 'Blues', xticklabels=xticks, vmin=0, vmax=len(pi0_all),ax=ax)
     plt.sca(ax)
-    plt.title('Positional variance diagram of the central ordering')
+    #plt.title('Positional variance diagram of the central ordering')
     plt.yticks(rotation=0) 
     plt.show()
     
@@ -116,7 +117,7 @@ def EventCenters(labels, pi0_mean, evn_full, evn):
         for cap in caps:
             cap.set_markeredgewidth(5)
     ax.set_yticks(np.arange(0,len(labels)-1+.1,1))
-    ax.set_yticklabels([labels[x] for x in pi0_mean[::-1]],rotation=45)
+    ax.set_yticklabels([labels[x] for x in pi0_mean[::-1]],rotation=0)
     #ax.get_yaxis().set_visible(False)
     ax.set_xlim([0,1])
     ax.set_xticks(np.arange(0,1.,0.1))

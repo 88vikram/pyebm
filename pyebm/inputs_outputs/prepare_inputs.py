@@ -44,10 +44,11 @@ def pdReadData(str_data,flag_JointFit=False,Labels=['CN','MCI','AD']):
             label_i=2;
         labels[idx_label]=label_i;
     idx_selectedsubjects = np.logical_not(labels == 0)
-    labels_selected=labels[np.logical_not(labels == 0)]
-    Data=Data[idx_selectedsubjects]
+    labels[~idx_selectedsubjects]=2
+#    labels_selected=labels[np.logical_not(labels == 0)]
+#    Data=Data[idx_selectedsubjects]
     Data=Data.drop('Diagnosis',axis=1)
-    Data=Data.assign(Diagnosis=pd.Series(labels_selected,Data.index))
+    Data=Data.assign(Diagnosis=pd.Series(labels,Data.index))
     
     return Data,UniqueSubjIDs
 
@@ -56,21 +57,29 @@ def CorrectConfounders(DataTrain,DataTest,Factors=['Age','Sex','ICV'],flag_corre
     flag_test=1;
     droplist = ['PTID','Diagnosis','EXAMDATE']
     GroupValues = []
+    if len(DataTest)==0:
+            flag_test=0;
+            DataTest=DataTrain.copy()
+            
     if flag_correct==0 or len(Factors)==0:
-        DataTrain=DataTrain.drop(Factors,axis=1)
-        DataBiomarkers=DataTrain.copy()
-        H = list(DataBiomarkers)
-        for j in droplist:
-            if any(j in f for f in H):
-                DataBiomarkers=DataBiomarkers.drop(j,axis=1)
-        BiomarkersList=list(DataBiomarkers)
+        for Data in [DataTrain,DataTest]:
+            Data=Data.drop(Factors,axis=1)
+            DataBiomarkers=Data.copy()
+            H = list(DataBiomarkers)
+            for j in droplist:
+                if any(j in f for f in H):
+                    DataBiomarkers=DataBiomarkers.drop(j,axis=1)
+            for j in Groups:
+                    if any(j in f for f in H):
+                        GroupValues.append(DataBiomarkers[j])
+                        DataBiomarkers=DataBiomarkers.drop(j,axis=1)
+            BiomarkersList=list(DataBiomarkers)
+
+        DataTrain = DataTrain.drop(Factors,axis=1)
         if len(DataTest)>0:
             DataTest = DataTest.drop(Factors,axis=1)
     else:
         ## Change categorical value to numerical value
-        if len(DataTest)==0:
-            flag_test=0;
-            DataTest=DataTrain.copy()
 
         if any('Sex' in f for f in Factors):
             count=-1;
@@ -93,16 +102,16 @@ def CorrectConfounders(DataTrain,DataTest,Factors=['Age','Sex','ICV'],flag_corre
         for Data in [DataTrain,DataTest]:
             count=count+1;
             idx = Data['Diagnosis']==1
-            DataBiomarkers=Data
+            DataBiomarkers=Data.copy()
             DataBiomarkers=DataBiomarkers.drop(Factors,axis=1)
             H = list(DataBiomarkers)
             for j in droplist:
                 if any(j in f for f in H):
                     DataBiomarkers=DataBiomarkers.drop(j,axis=1)
             for j in Groups:
-                GroupValues.append([])
+                #GroupValues.append([])
                 if any(j in f for f in H):
-                    GroupValues[-1].append(DataBiomarkers[j])
+                    GroupValues.append(DataBiomarkers[j])
                     DataBiomarkers=DataBiomarkers.drop(j,axis=1)
             BiomarkersList=list(DataBiomarkers)
             BiomarkersListnew=[]
@@ -137,7 +146,7 @@ def CorrectConfounders(DataTrain,DataTest,Factors=['Age','Sex','ICV'],flag_corre
                 CorrectionFactor = np.dot(Deviation.values,betai_slopes)
                 Data[BiomarkersListnew[i]] = Data[BiomarkersListnew[i]] - CorrectionFactor
             Data=Data.drop(Factors,axis=1)
-            Data=Data.drop(Groups,axis=1)
+            #Data=Data.drop(Groups,axis=1)
             for i in range(len(BiomarkersList)):
                 Data=Data.rename(columns={BiomarkersListnew[i]:BiomarkersList[i]})
             if count==0:
@@ -147,10 +156,10 @@ def CorrectConfounders(DataTrain,DataTest,Factors=['Age','Sex','ICV'],flag_corre
                 
     if flag_test==0:
         DataTest=[]
-        if len(Groups)==0:
-            GroupValues=[]
-        else:
-            GroupValues=GroupValues.pop()
+    if len(Groups)==0:
+        GroupValues=[]
+    #else:
+        #GroupValues=GroupValues.pop()
     return DataTrain,DataTest,BiomarkersList,GroupValues
 
 def pd2mat(pdData,BiomarkersList,flag_JointFit):

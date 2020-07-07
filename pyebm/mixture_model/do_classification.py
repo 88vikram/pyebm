@@ -16,7 +16,6 @@
 from __future__ import print_function
 
 import numpy as np
-from pyebm.mixture_model.gaussian_mixture_model import calculate_prob_mmN
 from pyebm.mixture_model.gaussian_mixture_model import calculate_prob_mm
 
 def Reject(data_AD,data_CN):
@@ -46,18 +45,18 @@ def Reject(data_AD,data_CN):
         Dcni_valid_c[:,0,:]=data_CN[:,i,:]
         if m[2]==1:
             py,pn,likeli_pre,likeli_post=calculate_prob_mm(Dcni_valid_c[:,:,0],p,val_invalid=np.nan);
-        else:
-            py,pn,likeli_pre,likeli_post=calculate_prob_mmN(Dcni_valid_c,p,val_invalid=np.nan);
+        #idx_cn_sort=np.argsort(py,axis=0)
         idx_in_cn=np.where(py<=0.5)
+        #idx_in_cn=idx_cn_sort[:int(len(idx_cn_sort)*0.25),0]
         
         mad=np.shape(data_AD)
         Dadi_valid_c = np.zeros((mad[0],1,mad[2]))
         Dadi_valid_c[:,0,:]=data_AD[:,i,:]
         if m[2]==1:
             py,pn,likeli_pre,likeli_post=calculate_prob_mm(Dadi_valid_c[:,:,0],p,val_invalid=np.nan);
-        else:
-            py,pn,likeli_pre,likeli_post=calculate_prob_mmN(Dadi_valid_c,p,val_invalid=np.nan);
         idx_in_ad=np.where(py>0.5)
+        #idx_ad_sort=np.argsort(py,axis=0)
+        #idx_in_ad=idx_ad_sort[-1:int(len(idx_ad_sort)*0.75):-1,0]
 
         Data_CN.append(Dcni_valid_c[idx_in_cn])
         Data_AD.append(Dadi_valid_c[idx_in_ad])
@@ -77,19 +76,12 @@ def Classify(Data4Classification,BiomarkerParams,DMO,Groups = None ,GroupValues 
          
          if Nfeats==1:
              params = np.zeros((Data4Classification.shape[1],5))
-             params[:,:2] = BiomarkerParams.Control
-             params[:,2:4] = BiomarkerParams.Disease
-         else:
-             params = np.zeros((Data4Classification.shape[1],5,Nfeats))
-             params[:,:2,:] = BiomarkerParams.Control
-             params[:,2:4,:] = BiomarkerParams.Disease
          if len(Groups)==0:
             if Nfeats==1:
                 params[:,4] = BiomarkerParams.Mixing
+                params[:,:2] = BiomarkerParams.Control
+                params[:,2:4] = BiomarkerParams.Disease
                 p_yes,p_no,likeli_pre,likeli_post=calculate_prob_mm(Data4Classification[:,:,0],params,val_invalid=np.nan);
-            else:
-                params[:,4,0] = BiomarkerParams.Mixing
-                p_yes,p_no,likeli_pre,likeli_post=calculate_prob_mmN(Data4Classification,params,val_invalid=np.nan);
          else:
             p_yes = np.zeros((Data4Classification.shape[0],Data4Classification.shape[1]))
             p_no = np.zeros((Data4Classification.shape[0],Data4Classification.shape[1]))
@@ -102,11 +94,11 @@ def Classify(Data4Classification,BiomarkerParams,DMO,Groups = None ,GroupValues 
             for g in gval:
                 count=count+1
                 idx=GroupValues[0]==g
+                params[:,:2] = BiomarkerParams.Control[count]
+                params[:,2:4] = BiomarkerParams.Disease[count]
                 params[:,4] = BiomarkerParams.Mixing[count]
                 if Nfeats==1:
                     p_yes_gr,p_no_gr,likeli_pre_gr,likeli_post_gr=calculate_prob_mm(Data4Classification[idx,:,0],params,val_invalid=np.nan);
-                else:
-                    p_yes_gr,p_no_gr,likeli_pre_gr,likeli_post_gr=calculate_prob_mmN(Data4Classification[idx,:,:],params,val_invalid=np.nan);
                 p_yes[idx,:]=p_yes_gr
                 p_no[idx,:]=p_no_gr
                 likeli_post[idx,:]=likeli_post_gr

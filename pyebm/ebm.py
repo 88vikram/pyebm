@@ -28,7 +28,7 @@ def fit(DataIn,MethodOptions=False,VerboseOptions=False,Factors=None,Labels = No
                     MethodOptions, VerboseOptions,Factors,Labels,DataTest,Groups,'ebm')
     
     data_CN_raw_list,data_AD_raw_list,data_all_list,ptid_all_list,GroupValues_list=cu.bootstrap_data_prep(data_CN_raw, \
-                    data_MCI_raw,data_AD_raw,ptid_CN_raw,ptid_MCI_raw,ptid_AD_raw,Data_all,pdData_all,DMO,DVO,BiomarkersList,GroupValues_cn,GroupValues_ad,GroupValues_mci)
+                    data_MCI_raw,data_AD_raw,ptid_CN_raw,ptid_MCI_raw,ptid_AD_raw,Data_all,pdData_all,DMO,DVO,BiomarkersList,Groups,GroupValues_cn,GroupValues_ad,GroupValues_mci)
     
     pi0_all=[];  
     params_opt_all=[]; 
@@ -43,7 +43,7 @@ def fit(DataIn,MethodOptions=False,VerboseOptions=False,Factors=None,Labels = No
         data_CN_raw = data_CN_raw_list[i];
         Data_all =  data_all_list[i];   
         GroupValues =    [GroupValues_list[i]] ;
-        BiomarkerParams,p_yes,p_no,likeli_post,likeli_pre=cu.do_mixturemodel(DMO,data_AD_raw,data_CN_raw,Data_all,Groups,GroupValues)                                      
+        BiomarkerParams,p_yes,p_no,likeli_post,likeli_pre=cu.do_mixturemodel(DMO,data_AD_raw,data_CN_raw,Data_all,Groups,GroupValues,GroupValues_cn,GroupValues_ad)                                      
         pi0,event_centers=cu.find_central_ordering(Data_all,p_yes,BiomarkerParams,Groups,GroupValues,DMO,'ebm')
         subj_stages=cu.do_patient_staging(pi0,event_centers,DMO,p_yes,p_no,likeli_post,likeli_pre,Groups,GroupValues)
         SubjTrain=cu.compile_subject_data(ptid_all_list[i],p_yes,subj_stages)
