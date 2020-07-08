@@ -28,7 +28,7 @@ Python 3.5 or higher, numpy 1.16, pandas 0.24, sklearn 0.20, scipy 1.2, seaborn 
 ## Explanation of Inputs:
 
 ### DataIn:
- String to the CSV File where the data is stored. This can also be a Pandas dataframe with necessary data. The CSV file or the dataframe must contain the following fields: PTID (Patient ID), Diagnosis (Clinical Label), Biomarkers, Confounding Factors, EXAMDATE (Date of Examination). See ADNI_7.csv for example.
+ String to the CSV File where the data is stored. This can also be a Pandas dataframe with necessary data. The CSV file or the dataframe must contain the following fields: PTID (Patient ID), Diagnosis (Clinical Label), Biomarkers, Confounding Factors, EXAMDATE (Date of Examination). See Data_7.csv for example.
 ### (optional) MethodOptions:
 Named Tuple with any or all of the following fields:
 
