@@ -41,7 +41,7 @@ def BiomarkerDistribution(Data_all,params_all,BiomarkersList):
                 likeli_post=norm_post.pdf(x_grid)
                 h=np.histogram(Dallis,50)                          
                 maxh=np.nanmax(h[0])
-                ax[i1,j1].hist(Dallis,50, fc='blue', histtype='stepfilled', alpha=0.3, normed=False)
+                ax[i1,j1].hist(Dallis,50, fc='blue', histtype='stepfilled', alpha=0.3)
                 #ylim=ax[i,j].get_ylim()
                 likeli_pre=likeli_pre*(paramsij.Mixing[i]);
                 likeli_post=likeli_post*(1-paramsij.Mixing[i]);

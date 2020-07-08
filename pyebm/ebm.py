@@ -16,7 +16,7 @@ from __future__ import print_function
 from pyebm.mixture_model import do_classification as dc 
 from pyebm import core_utilities as cu
 
-def fit(DataIn,MethodOptions=False,VerboseOptions=False,Factors=None,Labels = None,DataTest=[],Groups=[]):
+def fit(DataIn,MethodOptions=False,VerboseOptions=False,Factors=None,Labels = None,DataTest=[],Groups=[],maskidx=[]):
     
     if Factors == None:
         Factors = ['Age','Sex','ICV']
@@ -24,11 +24,13 @@ def fit(DataIn,MethodOptions=False,VerboseOptions=False,Factors=None,Labels = No
         Labels=['CN','MCI','AD']
         
     data_CN_raw,data_MCI_raw,data_AD_raw,ptid_CN_raw,ptid_MCI_raw,ptid_AD_raw,Data_all,pdData_all, \
-                    Data_test_all,pdDataTest_all,GroupValues_cn,GroupValues_ad,GroupValues_mci,GroupValues_test,BiomarkersList, DMO, DVO=cu.parse_inputs(DataIn,\
-                    MethodOptions, VerboseOptions,Factors,Labels,DataTest,Groups,'ebm')
+                    Data_test_all,pdDataTest_all,GroupValues_cn,GroupValues_ad,GroupValues_mci,\
+                    GroupValues_test,BiomarkersList, DMO, DVO,maskidx, maskidx_CN, maskidx_AD, maskidx_MCI=cu.parse_inputs(DataIn,\
+                    MethodOptions, VerboseOptions,Factors,Labels,DataTest,Groups,maskidx,'ebm')
     
-    data_CN_raw_list,data_AD_raw_list,data_all_list,ptid_all_list,GroupValues_list=cu.bootstrap_data_prep(data_CN_raw, \
-                    data_MCI_raw,data_AD_raw,ptid_CN_raw,ptid_MCI_raw,ptid_AD_raw,Data_all,pdData_all,DMO,DVO,BiomarkersList,Groups,GroupValues_cn,GroupValues_ad,GroupValues_mci)
+    data_CN_raw_list,data_AD_raw_list,data_all_list,ptid_all_list,GroupValues_list,maskidx_list=cu.bootstrap_data_prep(data_CN_raw, \
+                    data_MCI_raw,data_AD_raw,ptid_CN_raw,ptid_MCI_raw,ptid_AD_raw,Data_all,pdData_all,DMO,DVO,BiomarkersList,Groups,\
+                    GroupValues_cn,GroupValues_ad,GroupValues_mci,maskidx, maskidx_CN, maskidx_AD, maskidx_MCI)
     
     pi0_all=[];  
     params_opt_all=[]; 
@@ -43,8 +45,9 @@ def fit(DataIn,MethodOptions=False,VerboseOptions=False,Factors=None,Labels = No
         data_CN_raw = data_CN_raw_list[i];
         Data_all =  data_all_list[i];   
         GroupValues =    [GroupValues_list[i]] ;
+        maskidx = maskidx_list[i]
         BiomarkerParams,p_yes,p_no,likeli_post,likeli_pre=cu.do_mixturemodel(DMO,data_AD_raw,data_CN_raw,Data_all,Groups,GroupValues,GroupValues_cn,GroupValues_ad)                                      
-        pi0,event_centers=cu.find_central_ordering(Data_all,p_yes,BiomarkerParams,Groups,GroupValues,DMO,'ebm')
+        pi0,event_centers,ih_dummy=cu.find_central_ordering(Data_all,p_yes,BiomarkerParams,Groups,GroupValues,DMO,'ebm',maskidx)
         subj_stages=cu.do_patient_staging(pi0,event_centers,DMO,p_yes,p_no,likeli_post,likeli_pre,Groups,GroupValues)
         SubjTrain=cu.compile_subject_data(ptid_all_list[i],p_yes,subj_stages)
         SubjTest=[];

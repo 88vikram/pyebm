@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="pyebm",
-    version="2.0.1",
+    version="2.0.2",
     author="Vikram Venkatraghavan",
     author_email="v.venkatraghavan@erasmusmc.nl",
     description="Toolbox for event-based modeling",
@@ -20,6 +20,7 @@ setuptools.setup(
       'statsmodels',
       'matplotlib',
       'seaborn',
+      'requests',
       'tqdm'
     ],
     classifiers=[
