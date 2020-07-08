@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="pyebm",
-    version="2.0.0",
+    version="2.0.1",
     author="Vikram Venkatraghavan",
     author_email="v.venkatraghavan@erasmusmc.nl",
     description="Toolbox for event-based modeling",
@@ -24,7 +24,7 @@ setuptools.setup(
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: GNU General Public License 3.0",
+        "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
         "Operating System :: OS Independent",
     ],
 )
