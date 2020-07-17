@@ -4,7 +4,7 @@ If you would like to use the algorithms, install the toolbox using pip:
 
 - `pip install pyebm`
 
-The examples to use the toolbox can be found in the jupyter notebook at: ‘[link](https://github.com/88vikram/pyebm/tree/master/notebooks)’
+The examples to use the toolbox can be found in the jupyter notebook at: [link](https://github.com/88vikram/pyebm/tree/master/notebooks)
 
 The event-based model (EBM) for data-driven disease progression modeling estimates the sequence in which biomarkers for a disease become abnormal. This helps in understanding the dynamics of disease progression and facilitates early diagnosis by staging patients on a disease progression timeline. A more accurate and scalable EBM algorithm (Discriminative EBM) was introduced in [1,2]. DEBM was also one of the winners of the TADPOLE prediction challenge (TADPOLE). For more details of the prediction challenge, read Razvan Marinescu et al. [5].
 
