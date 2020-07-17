@@ -91,13 +91,45 @@ def GMM_Control(Data_all,Ncni,Nadi,Groups,GroupValues,params_nobias,type_opt=1,i
         if len(params_all)==1:
             params[i,:,:]=GMM(Dalli_valid_c,Nfeats,params[i,:,:],bnds,Groups,GroupValues,[])
         else:
-            params_grps_i=TransferGMM(Dalli_valid_c,Nfeats,paramsik,bnds_all,Groups,GroupValues,HyperParams)
+            params_grps_i=coGMM(Dalli_valid_c,Nfeats,paramsik,bnds_all,Groups,GroupValues,HyperParams)
             for k in range(len(params_all)):
                 params_all[k][i,:,0] = params_grps_i[:,k]
     if len(params_all)==1:
         params_all = params
     return params_all,bnds_all
 
+def coGMM(Data,Nfeats,paramsik,bnds_all,Groups,GroupValues,HyperParams):
+    tup_arg=(Data,Groups,GroupValues,HyperParams);
+    params=np.asarray(paramsik).flatten()
+    bnds=np.asarray(bnds_all).flatten()
+    lb = bnds[::2]
+    ub = bnds[1::2]
+    bnds = np.transpose(np.asarray([lb,ub]))
+    res=opt.minimize(calculate_objectivefunction_cogmm,params,args=(tup_arg),method='SLSQP', options={'disp': False,'maxiter': 600}, bounds=bnds)
+    gval=np.unique(GroupValues[0])
+    idx_valid=~np.isnan(gval)
+    gval=gval[idx_valid]
+    params_groups = np.zeros((5,len(gval)))
+    for j in range(len(gval)):
+        params_groups[0,j]=res.x[(j*5)+0]
+        params_groups[1,j]=res.x[(j*5)+1]
+        params_groups[2,j]=res.x[(j*5)+2]
+        params_groups[3,j]=res.x[(j*5)+3]
+        params_groups[4,j]=res.x[(j*5)+4]
+    return params_groups
+    
+def calculate_objectivefunction_cogmm(param,data,Groups,GroupValues,Hyperparams):
+    gval=np.unique(GroupValues[0])
+    idx_valid=~np.isnan(gval)
+    gval=gval[idx_valid]  
+    obj1 = 0; obj2=0;
+    for g in range(len(gval)):
+        paramsg = param[(5*g):(5*g+5)]
+        idx=GroupValues[0]==gval[g]
+        data_g=data[idx]
+        lg=calculate_likelihood_gmm(paramsg,data_g,[],[],[])
+        obj1 = obj1 + lg
+    return obj1
 
 def GMM(Data,Nfeats,params,bnds,Groups,GroupValues,Mixing):
 
