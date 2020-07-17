@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="pyebm",
-    version="2.0.2",
+    version="2.0.3",
     author="Vikram Venkatraghavan",
     author_email="v.venkatraghavan@erasmusmc.nl",
     description="Toolbox for event-based modeling",
