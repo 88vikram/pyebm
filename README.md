@@ -6,9 +6,9 @@ If you would like to use the algorithms, install the toolbox using pip:
 
 The examples to use the toolbox can be found in the jupyter notebook at: [link](https://github.com/88vikram/pyebm/tree/master/notebooks)
 
-The event-based model (EBM) for data-driven disease progression modeling estimates the sequence in which biomarkers for a disease become abnormal. This helps in understanding the dynamics of disease progression and facilitates early diagnosis by staging patients on a disease progression timeline. A more accurate and scalable EBM algorithm (Discriminative EBM) was introduced in [1,2]. DEBM was also one of the winners of the TADPOLE prediction challenge (TADPOLE). For more details of the prediction challenge, read Razvan Marinescu et al. [5].
+The event-based model (EBM) for data-driven disease progression modeling estimates the sequence in which biomarkers for a disease become abnormal. This helps in understanding the dynamics of disease progression and facilitates early diagnosis by staging patients on a disease progression timeline. A more accurate and scalable EBM algorithm (Discriminative EBM) was introduced in [1,2]. DEBM was also one of the winners of the TADPOLE prediction challenge (TADPOLE). For more details of the prediction challenge, read Razvan Marinescu et al. [5]. Using DEBM to estimate disease progression timeline in a cohort stratified into several groups was introduced in [6]
 
-Call debm.fit to find the central ordering in a few biomarkers using method [1,2]
+Call debm.fit to find the central ordering in a few biomarkers using method [1,2,6]
 
 Call ebm.fit to find the central ordering in a few biomarkers using method [3]
 
@@ -93,7 +93,9 @@ Each dataframe consists of the the following fields:
 
 [4] Young, A.L., et al.: ‘[A data-driven model of biomarker changes in sporadic Alzheimer’s disease](https://doi.org/10.1093/brain/awu176)’, Brain 137(9), 2564–2577 (2014).
 
-[5] Marinescu, R. et al.: ‘[The Alzheimer's Disease Prediction Of Longitudinal Evolution (TADPOLE) Challenge: Results after 1 Year Follow-up](https://arxiv.org/abs/2002.03419). 
+[5] Marinescu, R. et al.: ‘[The Alzheimer's Disease Prediction Of Longitudinal Evolution (TADPOLE) Challenge: Results after 1 Year Follow-up](https://arxiv.org/abs/2002.03419)’. 
+
+[6] Venkatraghavan V., et al., ‘[Analyzing the effect of APOE on Alzheimer’s disease progression using an event-based model for stratified populations](https://doi.org/10.1016/j.neuroimage.2020.117646)’, NeuroImage 227, 117646 (2021).
 
 ### Contact:
 
