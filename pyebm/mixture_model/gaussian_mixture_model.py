@@ -225,8 +225,7 @@ def GMM_AY(Data_all,data_AD_raw,data_CN_raw):
             bnds[:,1]=(np.nanmax(Dalli),params[i,1,0] ,params[i,2,0],params[i,3,0],1);
         idx = bnds[:,1]-bnds[:,0]<=0.001
         bnds[idx,1] = bnds[idx,0] + 0.001; # Upper bound should be greater 
-        tup_arg=(Dalli[:,0],0);
-        
+        tup_arg=(Dalli[:,0],[],0,[])
         try:
             res=opt.least_squares(calculate_likelihood_gmm,params[i,:,0],args=(tup_arg),method='trf', bounds=np.transpose(bnds))
             if max(np.isnan(res.x))!=1: # In case of convergence to a nan value
